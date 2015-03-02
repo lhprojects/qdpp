@@ -55,20 +55,21 @@
    where |d1| <= eps and |d2| eps.           */
 #ifndef QD_IEEE_ADD
 /* #undef QD_IEEE_ADD */
+/*#define QD_IEEE_ADD 1 //HL: */ 
 #endif
 
 /* Set the following to 1 to use slightly inaccurate but faster
    version of multiplication. */
 #ifndef QD_SLOPPY_MUL
 #define QD_SLOPPY_MUL 1
-#undef QD_SLOPPY_MUL //HL:
+#undef QD_SLOPPY_MUL /*HL: */
 #endif
 
 /* Set the following to 1 to use slightly inaccurate but faster
    version of division. */
 #ifndef QD_SLOPPY_DIV
 #define QD_SLOPPY_DIV 1
-#undef QD_SLOPPY_DIV //HL:
+#undef QD_SLOPPY_DIV  /*HL: */
 #endif
 
 /* Define this macro to be the isfinite(x) function. */
@@ -85,7 +86,7 @@
 #ifndef QD_ISNAN
 #define QD_ISNAN(x) std::isnan(x)
 
-//HL: ...
+/*HL: ... */
 #ifdef __cplusplus //I know when we use  std::isnan, we must be in the cpp context
 					//and some c files include this file but don't use QD_ISNAN
 					//those c files should be compiled correctly.
@@ -101,7 +102,7 @@ namespace std {
 }
 #endif
 #endif
-//HL: 
+/*HL:  */
 
 #endif
 

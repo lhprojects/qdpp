@@ -233,7 +233,7 @@ dd_real exp(const dd_real &a) {
   s = mul_pwr2(s, 2.0) + sqr(s);
   s = mul_pwr2(s, 2.0) + sqr(s);
   s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
+  s = mul_pwr2(s, 2.0) + sqr(s); 
   s = mul_pwr2(s, 2.0) + sqr(s);
   s = mul_pwr2(s, 2.0) + sqr(s);
   s = mul_pwr2(s, 2.0) + sqr(s);

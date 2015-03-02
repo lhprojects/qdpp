@@ -148,7 +148,9 @@ struct QD_API dd_real {
   std::string to_string(int precision = _ndigits, int width = 0, 
       std::ios_base::fmtflags fmt = static_cast<std::ios_base::fmtflags>(0), 
       bool showpos = false, bool uppercase = false, char fill = ' ') const;
-  int read(const char *s, dd_real &a);
+  //HL: OK static
+  static int read(const char *s, dd_real &a);
+
 
   /* Debugging Methods */
   void dump(const std::string &name = "", std::ostream &os = std::cerr) const;

@@ -72,7 +72,8 @@ void TestSuite<T>::test1() {
     cout << "Timing addition..." << endl;
   }
 
-  int n = 100000, i;
+  //int n = 100000, i;
+  int n = 100000000, i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -109,7 +110,8 @@ void TestSuite<T>::test2() {
     cout << "Timing multiplication ..." << endl;
   }
 
-  int n = 100000, i;
+  //int n = 100000, i;
+  int n = 100000000, i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -146,7 +148,8 @@ void TestSuite<T>::test3() {
     cout << "Timing division ..." << endl;
   }
 
-  int n = 100000, i;
+  //int n = 100000, i;
+  int n = 10000000, i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -183,7 +186,8 @@ void TestSuite<T>::test4() {
     cout << "Timing square root ..." << endl;
   }
 
-  int n = 10000, i;
+  //int n = 10000, i;
+  int n = 10000000, i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -220,7 +224,8 @@ void TestSuite<T>::test5() {
     cout << "Timing sin ..." << endl;
   }
 
-  int n = 4000, i;
+  //int n = 4000, i;
+  int n = 4000000, i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -253,7 +258,8 @@ void TestSuite<T>::test6() {
     cout << "Timing log ..." << endl;
   }
 
-  int n = 1000, i;
+  //int n = 1000, i;
+  int n = 1000000, i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -286,7 +292,8 @@ void TestSuite<T>::test7() {
     cout << "Timing dot ..." << endl;
   }
 
-  int n = 100000, i;
+  //int n = 100000, i;
+  int n = 100000000, i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -327,7 +334,8 @@ void TestSuite<T>::test8() {
     cout << "Timing exp ..." << endl;
   }
 
-  int n = 1000, i;
+  //int n = 1000, i;
+  int n = 1000000, i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -360,7 +368,8 @@ void TestSuite<T>::test9() {
     cout << "Timing cos ..." << endl;
   }
 
-  int n = 4000, i;
+  //int n = 4000, i;
+  int n = 4000000, i;
   tictoc tv;
   double t;
   n *= long_factor;

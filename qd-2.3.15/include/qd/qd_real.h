@@ -122,7 +122,7 @@ struct QD_API qd_real {
   void to_digits(char *s, int &expn, int precision = _ndigits) const;
   void write(char *s, int len, int precision = _ndigits, 
       bool showpos = false, bool uppercase = false) const;
-  std::string to_string(int precision = _ndigits, int width = 0, 
+  std::string to_strig(int precision = _ndigits, int width = 0, 
       std::ios_base::fmtflags fmt = static_cast<std::ios_base::fmtflags>(0), 
       bool showpos = false, bool uppercase = false, char fill = ' ') const;
   static int read(const char *s, qd_real &a);
@@ -133,7 +133,15 @@ struct QD_API qd_real {
                  std::ostream &os = std::cerr) const;
 
   static qd_real debug_rand();
+  std::string to_string(int precision = _ndigits, int width = 0, 
+      std::ios_base::fmtflags fmt = static_cast<std::ios_base::fmtflags>(0), 
+      bool showpos = false, bool uppercase = false, char fill = ' ') const;
 
+  //HL:
+  operator dd_real() {
+	  if(this->isnan()) return dd_real::_nan;
+	  return dd_real(x[0],x[1]);
+  }
 };
 
 namespace std {

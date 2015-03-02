@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "qd", "qd.vcxproj", "{53CD7B1E-A8E0-455B-9EED-FAEC2BE7C573}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "qd_test", "qd_test.vcxproj", "{24FA615D-1820-4E91-8772-26B70EEF40C5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "qd_test_pslq", "qd_test_pslq.vcxproj", "{24FA615D-1820-4E91-8772-26B70EEF40C5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "qd_test_c", "qd_test_c.vcxproj", "{888224D5-C82B-4AF3-8622-82AD2D6E9C4B}"
 EndProject
