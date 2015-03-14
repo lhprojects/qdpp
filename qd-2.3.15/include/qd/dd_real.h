@@ -69,8 +69,9 @@ struct QD_API dd_real {
     x[0] = (static_cast<double>(h));
     x[1] = 0.0;
   }
-
+#if 0
   dd_real (const char *s);
+#endif
   explicit dd_real (const double *d) {
     x[0] = d[0]; x[1] = d[1];
   }
@@ -108,6 +109,9 @@ struct QD_API dd_real {
   dd_real &operator+=(double a);
   dd_real &operator+=(const dd_real &a);
 
+  //HL:
+  inline  dd_real operator+() { return *this; };
+
   static dd_real sub(double a, double b);
 
   dd_real &operator-=(double a);
@@ -128,7 +132,9 @@ struct QD_API dd_real {
   dd_real &operator/=(const dd_real &a);
 
   dd_real &operator=(double a);
+#if 0
   dd_real &operator=(const char *s);
+#endif
 
   dd_real operator^(int n);
   static dd_real sqr(double d);

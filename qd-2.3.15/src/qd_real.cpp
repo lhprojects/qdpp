@@ -166,14 +166,13 @@ qd_real operator/(const qd_real &a, double b) {
   renorm(q0, q1, q2, q3);
   return qd_real(q0, q1, q2, q3);
 }
-
+#if 0 //HL:
 qd_real::qd_real(const char *s) {
   if (qd_real::read(s, *this)) {
     qd_real::error("(qd_real::qd_real): INPUT ERROR.");
     *this = qd_real::_nan;
   }
 }
-
 qd_real &qd_real::operator=(const char *s) {
   if (qd_real::read(s, *this)) {
     qd_real::error("(qd_real::operator=): INPUT ERROR.");
@@ -181,11 +180,12 @@ qd_real &qd_real::operator=(const char *s) {
   }
   return *this;
 }
+#endif
 
 istream &operator>>(istream &s, qd_real &qd) {
   char str[255];
   s >> str;
-  qd = qd_real(str);
+  qd_real::read(str, qd);
   return s;
 }
 
@@ -212,11 +212,14 @@ int qd_real::read(const char *s, qd_real &qd) {
 
   while (!done && (ch = *p) != '\0') {
     if (ch >= '0' && ch <= '9') {
-      /* It's a digit */
-      int d = ch - '0';
-      r *= 10.0;
-      r += static_cast<double>(d);
-      nd++;
+		if(point>=0 && nd>200) { //HL: workaround and can't deal all cases very well
+		} else {
+			/* It's a digit */
+			int d = ch - '0';
+			r *= 10.0;
+			r += static_cast<double>(d);
+			nd++;
+		}
     } else {
       /* Non-digit */
       switch (ch) {

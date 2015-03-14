@@ -63,7 +63,9 @@ struct QD_API qd_real {
   static const int _ndigits;
 
   qd_real();
+#if 0
   qd_real(const char *s);
+#endif
   qd_real(const dd_real &dd);
   qd_real(double d);
   qd_real(int i);
@@ -83,6 +85,10 @@ struct QD_API qd_real {
   qd_real &operator+=(double a);
   qd_real &operator+=(const dd_real &a);
   qd_real &operator+=(const qd_real &a);
+
+    //HL:
+  inline  qd_real operator+() { return *this; };
+
 
   qd_real &operator-=(double a);
   qd_real &operator-=(const dd_real &a);
@@ -110,7 +116,9 @@ struct QD_API qd_real {
 
   qd_real &operator=(double a);
   qd_real &operator=(const dd_real &a);
+#if 0
   qd_real &operator=(const char *s);
+#endif
 
   bool is_zero() const;
   bool is_one() const;

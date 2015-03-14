@@ -254,7 +254,8 @@ void c_dd_sincosh(const double *a, double *s, double *c) {
 }
 
 void c_dd_read(const char *s, double *a) {
-  dd_real aa(s);
+  dd_real aa;
+  dd_real::read(s, aa);
   TO_DOUBLE_PTR(aa, a);
 }
 

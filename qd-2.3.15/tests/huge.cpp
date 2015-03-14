@@ -65,7 +65,10 @@ template <class T>
 bool test_huge() {
   bool pass = true;
   int digits = T::_ndigits - 1;
-  T x = T::_pi * T("1.0e290");
+  //T x = T::_pi * T("1.0e290");
+  T x;
+  T::read("1.0e290", x);
+  x = T::_pi * x;
 
   string pi_str = T::_pi.to_string(digits, 0, std::ios_base::fixed);
   if (flag_verbose) cout << pi_str << endl;

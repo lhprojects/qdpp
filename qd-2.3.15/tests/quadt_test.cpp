@@ -156,7 +156,7 @@ public:
 
 template <class T>
 void convert(char *s, T *x) {
-  *x = s;
+  T::read(s, *x);
 }
 
 template <>

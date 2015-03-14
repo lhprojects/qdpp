@@ -75,5 +75,6 @@ int test_1() {
 
 int main(void) {
   fpu_fix_start(NULL);
-  return test_1();
+  test_1();
+  return 0;
 }

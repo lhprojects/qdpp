@@ -854,7 +854,7 @@ QD_API dd_real polyroot(const dd_real *c, int n,
   return x;
 }
 
-
+#if 0
 /* Constructor.  Reads a double-double number from the string s
    and constructs a double-double number.                         */
 dd_real::dd_real(const char *s) {
@@ -871,7 +871,7 @@ dd_real &dd_real::operator=(const char *s) {
   }
   return *this;
 }
-
+#endif
 /* Outputs the double-double number dd. */
 ostream &operator<<(ostream &os, const dd_real &dd) {
   bool showpos = (os.flags() & ios_base::showpos) != 0;
@@ -884,7 +884,7 @@ ostream &operator<<(ostream &os, const dd_real &dd) {
 istream &operator>>(istream &s, dd_real &a) {
   char str[255];
   s >> str;
-  a = dd_real(str);
+  dd_real::read(str, a);
   return s;
 }
 

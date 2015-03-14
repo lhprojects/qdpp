@@ -36,15 +36,15 @@ qd_real combinal(int n, int k) {
 	return factorial(n, n-k+1)/factorial(k);
 }
 
-qd_real Gamma(int a) {
+qd_real tgamma(qd_real a) {
 	qd_real p = 1.0;
-	for(int i = 1; i <= a-1; ++i) {
+	for(qd_real i = a-1; i != 0; i -= 1) {
 		p *= i;
 	}
 	return p;
 }
 
-qd_real gamma(int a, qd_real x) {
+qd_real tgamma_lower(qd_real a, qd_real x) {
 	if(a - 1 < 0) {
 		qd_real::error("gamma(int,qd_real): a-1 < 0");
 		return qd_real::_nan;
@@ -65,10 +65,10 @@ qd_real gamma(int a, qd_real x) {
 	//return exp(-x)*pow(x,a)*sum;
 }
 
-qd_real Gamma(int a, qd_real x) {
-	if(x==0) return Gamma(a);
+qd_real tgamma(qd_real a, qd_real x) {
+	if(x==0) return tgamma(a);
 	if(x < a+1) {
-		return Gamma(a)-gamma(a, x);
+		return tgamma(a)-tgamma_lower(a, x);
 	} else {
 		static qd_real FPMIN = std::numeric_limits<qd_real>::min()
 			/std::numeric_limits<qd_real>::epsilon();

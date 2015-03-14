@@ -92,7 +92,7 @@ void test_2() {
 	qd_real v;
 	int Gamma_table[] = {1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880};
 	for(int i = 1; i <= 10; ++i) {
-		if(Gamma(i)!=Gamma_table[i-1]) {
+		if(tgamma(i)!=Gamma_table[i-1]) {
 			printf("Check Faild!");
 			exit(1);
 		}
@@ -126,7 +126,7 @@ void test_3() {
 	qd_real v;
 	for(int i = 1; i <= 10; ++i) {
 		qd_real::read(Gamma_table[i-1],v);
-		qd_real v1 = Gamma(2*i, 0.5);
+		qd_real v1 = tgamma(2*i, 0.5);
 		qd_real err = fabs(v1/v-1)/std::numeric_limits<qd_real>::epsilon();
 		if(err>10000) {
 			printf("Check Faild!");
@@ -161,7 +161,7 @@ void test_4() {
 	qd_real v;
 	for(int i = 1; i <= 10; ++i) {
 		qd_real::read(Gamma_table[i-1],v);
-		qd_real v1 = Gamma(2*i, 5);
+		qd_real v1 = tgamma(2*i, 5);
 		qd_real err = fabs(v1/v-1)/std::numeric_limits<qd_real>::epsilon();
 		if(err>10000) {
 			printf("Check Faild!");
@@ -196,7 +196,7 @@ void test_5() {
 	qd_real v;
 	for(int i = 1; i <= 10; ++i) {
 		qd_real::read(Gamma_table[i-1],v);
-		qd_real v1 = Gamma(2*i, 50);
+		qd_real v1 = tgamma(2*i, 50);
 		qd_real err = fabs(v1/v-1)/std::numeric_limits<qd_real>::epsilon();
 		if(err>10000) {
 			printf("Check Faild!");

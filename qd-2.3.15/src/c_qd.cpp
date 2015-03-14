@@ -388,7 +388,8 @@ void c_qd_sincosh(const double *a, double *s, double *c) {
 }
 
 void c_qd_read(const char *s, double *a) {
-  qd_real aa(s);
+  qd_real aa;
+  qd_real::read(s, aa);
   TO_DOUBLE_PTR(aa, a);
 }
 
