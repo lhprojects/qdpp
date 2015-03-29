@@ -91,8 +91,8 @@ void test_2() {
 	qd_real x;
 	qd_real v;
 	int Gamma_table[] = {1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880};
-	for(int i = 1; i <= 10; ++i) {
-		if(tgamma(i)!=Gamma_table[i-1]) {
+	for(int i = 1; i <= sizeof(Gamma_table)/sizeof(int); ++i) {
+		if(tgamma(i*qd_real(1.0))!=Gamma_table[i-1]) {
 			printf("Check Faild!");
 			exit(1);
 		}

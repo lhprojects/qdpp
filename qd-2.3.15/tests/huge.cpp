@@ -77,8 +77,9 @@ bool test_huge() {
     os << pi_str << "e+" << (290 + i);
     pass &= check(x.to_string(digits), os.str());
   }
-
-  x = -T::_pi * T("1.0e290");
+  T t;
+  T::read("1.0e290", t);
+  x = -T::_pi * t;
   pi_str = "-" + pi_str;
   for (int i = 0; i < 18; i++, x *= 10.0) {
     std::ostringstream os;

@@ -18,6 +18,7 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <algorithm> //HL: for std::max
 
 #include "config.h"
 #include <qd/dd_real.h>
@@ -1161,7 +1162,7 @@ string dd_real::to_string(int precision, int width, ios_base::fmtflags fmt,
   }
 
   /* Fill in the blanks */
-  int len = s.length();
+  int len = (int)s.length(); //HL:suppress warnings
   if (len < width) {
     int delta = width - len;
     if (fmt & ios_base::internal) {
@@ -1196,12 +1197,15 @@ int dd_real::read(const char *s, dd_real &a) {
     p++;
 
   while (!done && (ch = *p) != '\0') {
-    if (ch >= '0' && ch <= '9') {
-      int d = ch - '0';
-      r *= 10.0;
-      r += static_cast<double>(d);
-      nd++;
-    } else {
+	  if (ch >= '0' && ch <= '9') {
+		  if(point>=0 && nd>200) { //HL: workaround and can't deal all cases very well
+		  } else {
+			  int d = ch - '0';
+			  r *= 10.0;
+			  r += static_cast<double>(d);
+			  nd++;
+		  }
+	 } else {
 
       switch (ch) {
 

@@ -18,6 +18,7 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <algorithm> //HL: for std::max
 
 #include "config.h"
 #include <qd/qd_real.h>
@@ -550,7 +551,7 @@ string qd_real::to_string(int precision, int width, ios_base::fmtflags fmt,
   }
 
   /* Fill in the blanks */
-  int len = s.length();
+  int len = (int)s.length(); //HL:suppress warnings
   if (len < width) {
     int delta = width - len;
     if (fmt & ios_base::internal) {
