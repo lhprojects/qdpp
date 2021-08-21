@@ -1,0 +1,22 @@
+cmake_minimum_required (VERSION 3.18)
+project ("qdpp")
+
+message("Compiler: ${CMAKE_CXX_COMPILER_ID}")
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include) 
+set (CMAKE_CXX_STANDARD 20)
+
+set(TICTOK ${CMAKE_CURRENT_SOURCE_DIR}/tictoc.cpp)
+
+add_executable(qd_test_c c_test.c ../src/c_fpu.cpp ../src/c_dd.cpp ../src/c_qd.cpp)
+add_executable(qd_test_more qd_more_test.cpp)
+add_executable(qd_test_huge huge.cpp ${TICTOK})
+add_executable(qd_test_pslq pslq_test.cpp ${TICTOK})
+add_executable(qd_test_qd qd_test.cpp ${TICTOK})
+add_executable(qd_test_quadt quadt_test.cpp ${TICTOK})
+add_executable(qd_test_double_math double_math.cpp)
+add_executable(qd_bench qd_timer.cpp ${TICTOK})
+
+
+
+
