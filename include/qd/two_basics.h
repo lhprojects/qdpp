@@ -20,7 +20,6 @@
 
 #include <cmath>
 #include <limits>
-
 #include "qd_config.h"
 
 namespace qd {
@@ -28,14 +27,34 @@ namespace qd {
 inline QD_CONSTEXPR const double _d_nan = std::numeric_limits<double>::quiet_NaN();
 inline QD_CONSTEXPR const double _d_inf = std::numeric_limits<double>::infinity();
 
+
 #ifdef __GNUC__
-#pragma GCC push_options
-#pragma GCC optimize ("no-fast-math")
+#if defined(__FAST_MATH__) && __FAST_MATH__
+
+#include <stdio.h>
+#include <type_traits>
+#include <exception>
+#define TWO_CHECK() do {\
+    if (!std::is_constant_evaluated()) {\
+        fprintf(stderr, "Don't use fast-math when you use dd_real/qd_real\n");\
+        std::terminate();\
+    } else {\
+        int dont_use_fast_math_when_you_use_dd_real = 1;\
+        dont_use_fast_math_when_you_use_dd_real -= dont_use_fast_math_when_you_use_dd_real;\
+        int dumy = 1 / dont_use_fast_math_when_you_use_dd_real;\
+    }\
+} while(false)
+#else
+#define TWO_CHECK() do {} while(false)
+#endif
+#else
+#define TWO_CHECK() do {} while(false)
 #endif
 
 /*********** Basic Functions ************/
 /* Computes fl(a+b) and err(a+b).  Assumes |a| >= |b|. */
 inline QD_CONSTEXPR double quick_two_sum(double a, double b, double &err) {
+  TWO_CHECK();
   double s = a + b;
   err = b - (s - a);
   return s;
@@ -43,14 +62,16 @@ inline QD_CONSTEXPR double quick_two_sum(double a, double b, double &err) {
 
 /* Computes fl(a-b) and err(a-b).  Assumes |a| >= |b| */
 inline QD_CONSTEXPR double quick_two_diff(double a, double b, double &err) {
-  double s = a - b;
+    TWO_CHECK();
+    double s = a - b;
   err = (a - s) - b;
   return s;
 }
 
 /* Computes fl(a+b) and err(a+b).  */
 inline QD_CONSTEXPR double two_sum(double a, double b, double &err) {
-  double s = a + b;
+    TWO_CHECK();
+    double s = a + b;
   double bb = s - a;
   err = (a - (s - bb)) + (b - bb);
   return s;
@@ -58,7 +79,8 @@ inline QD_CONSTEXPR double two_sum(double a, double b, double &err) {
 
 /* Computes fl(a-b) and err(a-b).  */
 inline QD_CONSTEXPR double two_diff(double a, double b, double &err) {
-  double s = a - b;
+    TWO_CHECK();
+    double s = a - b;
   double bb = s - a;
   err = (a - (s - bb)) - (b + bb);
   return s;
@@ -90,7 +112,8 @@ inline QD_CONSTEXPR double two_prod(double a, double b, double &err) {
   err = QD_FMS(a, b, p);
   return p;
 #else
-  double a_hi, a_lo, b_hi, b_lo;
+    TWO_CHECK();
+    double a_hi, a_lo, b_hi, b_lo;
   double p = a * b;
   split(a, a_hi, a_lo);
   split(b, b_hi, b_lo);
@@ -106,17 +129,14 @@ inline QD_CONSTEXPR double two_sqr(double a, double &err) {
   err = QD_FMS(a, a, p);
   return p;
 #else
-  double hi, lo;
+    TWO_CHECK();
+    double hi, lo;
   double q = a * a;
   split(a, hi, lo);
   err = ((hi * hi - q) + 2.0 * hi * lo) + lo * lo;
   return q;
 #endif
 }
-
-#ifdef __GNUC__
-#pragma GCC pop_options
-#endif
 
 }
 
