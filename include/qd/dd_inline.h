@@ -25,6 +25,12 @@ QD_CONSTEXPR bool dd_real::isinf() const { return QD_ISINF(x[0]); }
 
 #define QD_OP_TAIL(x) if(!std::is_constant_evaluated()) assert(!(x).isnan())
 
+/* Cast to double. */
+inline QD_CONSTEXPR double to_double(const dd_real& a)
+{
+    return a.x[0];
+}
+
 /*********** Additions ************/
 /* double-double = double + double */
 inline QD_CONSTEXPR dd_real dd_real::add(double a, double b) {

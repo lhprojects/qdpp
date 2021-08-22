@@ -963,13 +963,6 @@ inline constexpr dd_real aint(const dd_real& a)
     return (a.x[0] >= 0.0) ? floor(a) : ceil(a);
 }
 
-/* Cast to double. */
-inline constexpr double to_double(const dd_real& a)
-{
-    return a.x[0];
-}
-
-
 /* Random number generator */
 inline dd_real dd_real::rand()
 {

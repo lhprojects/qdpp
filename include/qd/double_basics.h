@@ -75,6 +75,7 @@ namespace fb {
     constexpr int EXP_NORMAL_MIN = -1022;
     constexpr int EXP_SUBNORMAL = -1023;
 
+    constexpr int EXP_MIN = -1074;
     constexpr int EXP_OFFSET = 52;
 
     constexpr uint64_t FRAC_MASK = (uint64_t(1) << EXP_OFFSET) - 1;
@@ -370,6 +371,7 @@ namespace fb {
         }
     }
 
+    // trunc the result if submnorm
     inline constexpr double ldexp_(double x, int exp)
     {
         if (x == 0. || isinf(x) || isnan(x) || exp == 0) {
@@ -446,6 +448,29 @@ namespace fb {
             return frexp_(arg, exp);
         } else {
             return std::frexp(arg, exp);
+        }
+    }
+    // round the result if submnorm
+    inline constexpr double mul2pwr_(double x, int exp)
+    {
+        if (x == 0. || isinf(x) || isnan(x) || exp == 0) {
+            return x;
+        } else {
+            int a;
+            double x_ = frexp_(x, &a);
+            x_ *= 2;
+            a -= 1;
+
+            a += exp;
+            if (a >= EXP_MIN) {
+                double v = ldexp(1., a);
+                x_ *= v;
+                return x_;
+            } else if (a == EXP_MIN - 1) {
+                return _subnorm_min;
+            } else if (a < EXP_MIN - 1) {
+                return copysign(0, x);
+            }
         }
     }
 

@@ -169,9 +169,9 @@ QD_API constexpr dd_real operator/(const dd_real &a, const dd_real &b);
 
 QD_API constexpr dd_real inv(const dd_real &a);
 
-QD_API constexpr bool operator==(const dd_real &a, double b);
-QD_API constexpr bool operator==(double a, const dd_real &b);
-QD_API constexpr bool operator==(const dd_real &a, const dd_real &b);
+constexpr bool operator==(const dd_real &a, double b);
+constexpr bool operator==(double a, const dd_real &b);
+constexpr bool operator==(const dd_real &a, const dd_real &b);
 
 QD_API constexpr bool operator<=(const dd_real &a, double b);
 QD_API constexpr bool operator<=(double a, const dd_real &b);

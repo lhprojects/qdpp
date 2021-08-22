@@ -25,7 +25,7 @@ double get_ups(double x)
                 x - std::nextafter(x, 0));
 		}
 	} else {
-		return -get_ups(-x);
+		return get_ups(-x);
 	}
 }
 bool fb_close(double x, double y, int neps_ = neps)
@@ -334,6 +334,14 @@ void test_ldexp()
 	static_assert(fb::ldexp_(1.5, 1) == 3.);
 	QdAssert(fb::ldexp_(1.5, 1) == 3.);
 
+	
+	double const test = 2 * _d_one_prev;
+	QdAssert(std::ldexp(std::ldexp(test, EXP_NORMAL_MIN), -EXP_NORMAL_MIN) == test);
+	QdAssert(fb::ldexp_(fb::ldexp_(test, EXP_NORMAL_MIN), -EXP_NORMAL_MIN) == test);
+
+	// trunced
+    QdAssert(std::ldexp(std::ldexp(test, EXP_NORMAL_MIN - 1), -EXP_NORMAL_MIN + 1) != test);
+	QdAssert(fb::ldexp_(fb::ldexp_(test, EXP_NORMAL_MIN - 1), -EXP_NORMAL_MIN + 1) != test);
 
 	QdAssert(fb::ldexp_(_subnorm_min, -SUBNORM_MIN_EXP) == 1.0);
 	QdAssert(fb::ldexp_(_subnorm_min, -1) == 0);
@@ -347,6 +355,12 @@ void test_ldexp()
 
 	static_assert(fb::ldexp_(_d_one, 1024) == _infinity);
 	QdAssert(fb::ldexp_(_d_one, 1024) == _infinity);
+
+
+	// round
+	QdAssert(test * std::ldexp(1., EXP_NORMAL_MIN - 1) * std::ldexp(1., -(EXP_NORMAL_MIN - 1)) == 2.);
+	QdAssert(fb::mul2pwr_(fb::mul2pwr_(test, EXP_NORMAL_MIN - 1), -(EXP_NORMAL_MIN - 1)) == 2.);
+
 }
 void test_frexp()
 {
@@ -449,6 +463,14 @@ void test_log()
 {
 	QdAssert(std::isinf(fb::log_(0.)));
 	QdAssert(std::isinf(fb::log_(1.)) == 0);
+
+	neps = 1;
+    QdClose(fb::log_(1. / 8), -2.079441541679835928251696364374529704226500403080765762362040028);
+    QdClose(fb::log_(2. / 8), -1.386294361119890618834464242916353136151000268720510508241360018);
+	QdClose(fb::log_(5. / 8), -0.470003629245735553650937031148342064700899048812248040449392137);
+	QdClose(fb::log_(7. / 8), -0.133531392624522623146343620931349974589415673498904573902649878);
+	QdClose(fb::log_(15. / 16), -0.064538521137571171672923915683992928128908625349753842835377812);
+
 	QdAssert(std::abs(fb::log_(2.) / _d_ln2-1) <= fb::_eps);
 	QdAssert(std::abs(fb::log_(3.) / _d_ln3 - 1) <= fb::_eps);
 	QdAssert(std::abs(fb::log_(4.) / _d_ln4 - 1) <= fb::_eps);
@@ -563,7 +585,14 @@ void test_cbrt()
 void test_hypot()
 {
 	constexpr double a = fb::hypot_(0, 1);
-    QdAssert(fb::hypot_(0, 1) == 1);
+	QdAssert(fb::hypot_(_infinity, 0) == _infinity);
+	QdAssert(fb::hypot_(_infinity, 1) == _infinity);
+	QdAssert(fb::hypot_(_infinity, _d_nan) == _infinity);
+	QdAssert(fb::hypot_(-_infinity, 0) == _infinity);
+	QdAssert(fb::hypot_(-_infinity, 1) == _infinity);
+	QdAssert(fb::hypot_(-_infinity, _d_nan) == _infinity);
+
+	QdAssert(fb::hypot_(0, 1) == 1);
     QdAssert(fb::hypot_(1, 0) == 1);
     QdAssert(fb::hypot_(1, 1) == 1.4142135623730950488016887242096980785696718753769480731766797379);
     QdAssert(fb::hypot_(1, 2) == 2.2360679774997896964091736687312762354406183596115257242708972454);
@@ -572,6 +601,27 @@ void test_hypot()
     QdAssert(fb::hypot_(_d_pi, _d_pi / 2) == 3.51240736552036305965851275555178760679657218311525);
     QdAssert(fb::hypot_(_d_pi, _d_pi / 10) == 3.15726154208045479557128857463234333803672524107779);
 
+	QdAssert(fb::hypot_(_infinity, 0, 1) == _infinity);
+	QdAssert(fb::hypot_(_infinity, 1, 0) == _infinity);
+	QdAssert(fb::hypot_(_infinity, _d_nan, 0) == _infinity);
+	QdAssert(fb::hypot_(-_infinity, 0, 0) == _infinity);
+	QdAssert(fb::hypot_(-_infinity, 1, 0) == _infinity);
+	QdAssert(fb::hypot_(-_infinity, _d_nan, 0) == _infinity);
+
+	QdAssert(fb::hypot_(0, 1, 0) == 1);
+	QdAssert(fb::hypot_(1, 0, 1) == 1.4142135623730950488016887242096980785696718753769480731766797379);
+	QdAssert(fb::hypot_(1, 0, 2) == 2.2360679774997896964091736687312762354406183596115257242708972454);
+	QdAssert(fb::hypot_(1, 3, 0) == 3.1622776601683793319988935444327185337195551393252168268575048527);
+	QdAssert(fb::hypot_(1, 1000, 0) == 1000.0004999998750000624999609375273437294922036132681579698943999);
+	QdAssert(fb::hypot_(0, _d_pi, _d_pi / 2) == 3.51240736552036305965851275555178760679657218311525);
+	QdAssert(fb::hypot_(0, _d_pi, _d_pi / 10) == 3.15726154208045479557128857463234333803672524107779);
+}
+
+void test_nan()
+{
+	constexpr double a = fb::nan_("1");
+	double b = fb::nan_("1");
+	double c = fb::nan_("");
 }
 
 int main()
@@ -595,4 +645,10 @@ int main()
 	test_exp();
 	test_cbrt();
 	test_hypot();
+	test_nan();
+
+	if (nerr)
+		return -1;
+	else
+		return 0;
 }

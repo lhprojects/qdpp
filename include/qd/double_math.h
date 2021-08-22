@@ -7,50 +7,154 @@
 
 namespace fb {
 
-    inline constexpr double log_(double x)
+#if 0
+    inline constexpr double fma__(double a, double b, double c) noexcept
     {
-        if (isnan(x)) {
-            return _d_nan;
-        } else if (x == 0.) {
-            return copysign_(_infinity, x);
-        } else if (x == 1) {
-            return 0.;
-        } else if (x < 0.) {
-            return _d_nan;
-        } else if (isinf(x)) {
-            return x;
+        if (isnan_(a) || isnan_(b) || isnan_(c)) {
+            return c;
+        } else if (isinf_(a)) {
+            if (b == 0.) {
+                return _d_nan;
+            } else if(isinf_(c)) {
+                if ((signbit(a) == signbit(b)) != signbit(c)) {
+                    return _d_nan;
+                } else {
+                    return c;
+                }
+            }
+        } else if (isinf_(b)) {
+            if (a == 0.) {
+                return _d_nan;
+            } else if (isinf_(c)) {
+                if ((signbit(a) == signbit(b)) != signbit(c)) {
+                    return _d_nan;
+                } else {
+                    return c;
+                }
+            }
+        } else if (isinf_(c)) {
+            return c;
         } else {
-            //positive finite
-            // log_a(x) = log_2(x)/log_2(a)
-            int exp_;
-            double x_ = frexp_(x, &exp_);
-            x_ *= 2.;
-            exp_ -= 1;
+            // a,b,c are all finite
+            // calculate a*b+c
+            
+            bool absign = signbit(a) == signbit(b);
+            bool sign = absign == signbit(c);
+            int aexp, bexp, cexp;
+            double a_ = frexp(a, &aexp);
+            double b_ = frexp(b, &bexp);
+            double c_ = frexp(c, &cexp);
 
-            // x = x_ 2^exp_ 
-            // 1. <= x_ < 2
-            // log(x) = exp_ * log(x_)
-            // log(x) = log(x_) + exp_*log(2)
+            uint64_t af = frac_part(a_);
+            uint64_t bf = frac_part(b_);
+            uint64_t cf_ = frac_part(c_);
+            af |= uint64_t(1) << EXP_OFFSET;
+            bf |= uint64_t(1) << EXP_OFFSET;
+            cf_ |= uint64_t(1) << EXP_OFFSET;
+            Uint128 abf = Uint128::mul(af, bf);
+            uint64_t cf = cf_;
 
-            constexpr double _d_ln_1d5 = 0.4054651081081643819780131154643491365719904234624941976140143241;
+            int abfexp = aexp + bexp - 52 - 52;
+            // a*b = abf * 2^{ abfexp }
+            int cfexp = cexp - 52;
+            // c = cf * 2^{ cfexp }
 
-            constexpr double _d_ln_table[] = {
-                0.4054651081081643819780131154643491365719904234624941976140143241,
-                0.2231435513142097557662950903098345033746010855480072136712878724,
-                 0.1177830356563834545387941094705217050684807125647331411073486387,
-                 0.0606246218164348425806061320404202632862024751447237708145176999,
-                 0.0307716586667536883710282075967721640916967399588903563498619953,
-                 0.0155041865359652541508540460424468358778684928671933136076133451,
-                 0.0077821404420549489474629000611367636781258021825180880816195321,
-                 0.0038986404156573230139373430958429070107237541049028050776797502,
-                 0.0019512201312617494396740495318415385003497255250798866559231518,
-                 0.0009760859730554588959608249080171866726118343337845362377585982,
-            };
+            int coff = cfexp - abfexp;
 
-            double lnx_ = 0.;
+            Uint128 ans = 0;
+            int ansexp = 0;
+            if (sign) {
+                if (coff <= -53) {
+                    ans = abf;
+                    ansexp = abfexp;
+                } else if (coff >= 107) { // 53bits * 53*bits = 107 bits
+                    ans = cf;
+                    ansexp = cfexp;
+                } else {
 
-            // ln(x_) = 1.???????
-            double x_frac = x_ - 1;
+                }
+
+            }
+
+        }
+    }
+#endif
+
+    inline constexpr double fdim_(double x, double y)
+    {
+        if (x > y) {
+            return x - y;
+        } else if (x <= y) {
+            return +0.;
+        } else {
+            return _d_nan;
+        }
+    }
+
+    inline constexpr double nan_(char const *s)
+    {
+        if (*s == '\0') {
+            return _d_nan;
+        }
+        uint64_t v = 0;
+        for (; *s; ++s) {
+            char ch = *s;
+            if (ch >= '0' && ch <= '9') {
+                v *= 10;
+                int d = *s - '0';
+                v += d;
+            }
+        }
+        // TODO: negative? overflow?
+        
+        constexpr int exp = exp_part(_d_nan);
+        return make_double(v, exp, 0);
+    }
+
+    inline constexpr double log1p_Taylor(double x)
+    {
+        double x_frac = x;
+        double z1 = x_frac;
+        double z2 = 2. + x_frac;
+        double z3 = z1 / z2;
+        double z6 = sqr_(z3);
+
+
+        double t = 0;
+        t = t * z6 + 1 / 13.;
+        t = t * z6 + 1 / 11;
+        t = t * z6 + 1 / 9.;
+        t = t * z6 + 1 / 7.;
+        t = t * z6 + 1 / 5.;
+        t = t * z6 + 1 / 3.;
+        t = t * z6 + 1 / 1.;
+
+        double r = 2 * z3 * t;
+        return r;
+    }
+
+    //0.5 <= x < 1
+    inline constexpr double log1p_2(double x)
+    {
+        constexpr double _d_ln_1d5 = 0.4054651081081643819780131154643491365719904234624941976140143241;
+
+        constexpr double _d_ln_table[] = {
+            0.4054651081081643819780131154643491365719904234624941976140143241,
+            0.2231435513142097557662950903098345033746010855480072136712878724,
+             0.1177830356563834545387941094705217050684807125647331411073486387,
+             0.0606246218164348425806061320404202632862024751447237708145176999,
+             0.0307716586667536883710282075967721640916967399588903563498619953,
+             0.0155041865359652541508540460424468358778684928671933136076133451,
+             0.0077821404420549489474629000611367636781258021825180880816195321,
+             0.0038986404156573230139373430958429070107237541049028050776797502,
+             0.0019512201312617494396740495318415385003497255250798866559231518,
+             0.0009760859730554588959608249080171866726118343337845362377585982,
+        };
+
+        double lnx_ = 0.;
+        double x_frac = x;
+
+        if (x_frac > 0) {
             if (x_frac >= 0.5) {
                 // we want (1 + x_frac) / 1.5
                 // (1.5 + x_frac - 0.5) / 1.5
@@ -65,7 +169,7 @@ namespace fb {
 
             bool _d_ln_table_v[std::size(_d_ln_table)] = {};
             double frac_test = 1 / 4.;
-            for (int i = 1; i < std::size(_d_ln_table); ++i) {
+            for (size_t i = 1; i < std::size(_d_ln_table); ++i) {
                 if (x_frac >= frac_test) {
                     x_frac = (x_frac - frac_test) / (1 + frac_test);
                     _d_ln_table_v[i] = true;
@@ -79,27 +183,74 @@ namespace fb {
             }
             lnx_ += t2;
 
-            // x_ < 1. + 1/1024
-            double z1 = x_frac;
-            double z2 = 2. + x_frac;
-            double z3 = z1 / z2;
-            double z6 = sqr_(z3);
+        } else {
+
+            bool _d_ln_table_v[std::size(_d_ln_table)] = {};
+
+            double frac_test = 0.5;
+            for (size_t i = 0; i < std::size(_d_ln_table); ++i) {
+
+                // 0 > x >= -test;
+                // (1+x)*(1+frac_test) - 1
+                // x + (1+ frac_test) * x
+                double x2 = frac_test + (1 + frac_test) * x_frac;
+                // x2 = frac_test + x + frac_test*x
+                // x2 >= frac_test - frac_test - frac_test*frac_test
+                // x2 >= - frac_test*frac_test >= -0.5 frac_test
+                if (x2 <= 0) {
+                    _d_ln_table_v[i] = true;
+                    x_frac = x2;
+                }
+                frac_test /= 2;
+            }
+
+            double t2 = 0;
+            for (size_t i = std::size(_d_ln_table); i >= 1; --i) {
+                t2 += _d_ln_table_v[i - 1] ? _d_ln_table[i - 1] : 0;
+            }
+            lnx_ -= t2;
+        }
+
+        double fix = log1p_Taylor(x_frac);
+        lnx_ += fix;
+
+        return lnx_;
+    }
 
 
-            double t = 0;
-            t = t * z6 + 1 / 13.;
-            t = t * z6 + 1 / 11;
-            t = t * z6 + 1 / 9.;
-            t = t * z6 + 1 / 7.;
-            t = t * z6 + 1 / 5.;
-            t = t * z6 + 1 / 3.;
-            t = t * z6 + 1 / 1.;
+    inline constexpr double log_(double x)
+    {
+        if (isnan(x)) {
+            return _d_nan;
+        } else if (x == 0.) {
+            return copysign_(_infinity, x);
+        } else if (x == 1) {
+            return 0.;
+        } else if (x < 0.) {
+            return _d_nan;
+        } else if (isinf(x)) {
+            return x;
+        } else {
+            //positive finite
 
-            double lnmin = 2 * z3 * t;
-            lnx_ += lnmin;
+            if (x >= 0.5 && x < 2.) {
+                return log1p_2(x - 1);
+            } else {
+                int exp_;
+                double x_ = frexp_(x, &exp_);
+                x_ *= 2.;
+                exp_ -= 1;
 
-            double r = lnx_ + exp_ * _d_ln2;
-            return r;
+                // x = x_ 2^exp_ 
+                // 1. <= x_ < 2
+                // log(x) = exp_ * log(x_)
+                // log(x) = log(x_) + exp_*log(2)
+
+                double r = log1p_2(x_ - 1.);
+                r += exp_ * _d_ln2;
+                return r;
+
+            }
         }
     }
 
@@ -110,6 +261,162 @@ namespace fb {
         } else {
             return std::log(x);
         }
+    }
+
+    inline constexpr double log1p_(double x)
+    {
+        if (isnan_(x)) {
+            return _d_nan;
+        } else if (x == 0.) {
+            return x;
+        } else if (x < -1.) {
+            return _d_nan;
+        } else if (isinf_(x)) {
+            return _infinity;
+        } else {
+            //positive finite
+
+            if (x < -0.5) {
+                return log_(1. + x);
+            } else if(x > 1.) {
+                return log_(1. + x);
+            } else {
+                return log1p_2(x);
+            }
+        }
+    }
+
+
+    inline constexpr double log10_(double x) noexcept
+    {
+        return log_(x) / _d_ln10;
+    }
+
+    inline constexpr double log2_(double x) noexcept
+    {
+        int a;
+        double x_ = frexp_(x, &a);
+        return log(x_) / _d_ln2 + a;
+    }
+
+    // a mod pi/2
+    inline constexpr double mod_pio2(double a, int &n)
+    {
+        if (abs_(a) < (uint64_t(1) << 52)) {
+            dd_real r = a / (dd_real::_pi / 2);
+            floor_(r._hi());
+        }
+        const double modpio2_table[] = {
+#include "modpio2_table.h"
+        };
+        const char divpio2_mod4_table[] = {
+1,1,3,1,2,0,1,1,3,2,0,0,0,3,2,1,
+2,3,2,0,0,0,1,2,3,3,2,3,3,2,0,3,
+2,1,1,2,1,2,0,3,2,1,1,2,0,1,1,2,
+0,0,0,1,1,3,1,3,1,2,1,1,3,1,2,1,
+2,0,0,0,0,0,3,2,0,0,1,1,2,1,2,0,
+3,3,1,3,1,3,2,0,0,0,3,3,1,2,0,1,
+2,0,0,0,3,3,1,3,1,2,1,2,3,3,1,2,
+1,2,3,3,2,0,3,3,2,0,3,2,0,0,0,0,
+1,2,3,3,2,3,3,2,3,3,2,3,2,0,1,1,
+3,1,2,1,1,3,1,3,2,3,2,1,2,3,2,1,
+1,2,1,2,0,0,3,2,0,1,1,2,0,0,1,2,
+0,3,2,1,1,2,0,0,0,1,1,2,0,0,0,1,
+2,0,0,0,0,0,0,3,2,1,1,3,1,2,0,1,
+1,3,2,3,2,0,1,2,0,3,3,1,3,1,3,2,
+0,0,3,3,2,0,0,3,3,1,3,2,0,3,3,2,
+0,0,3,2,0,1,1,3,1,3,2,3,2,0,0,1,
+2,3,3,2,3,3,2,0,3,2,1,1,2,1,1,2,
+0,1,2,3,3,2,0,3,2,0,1,2,0,3,3,1,
+2,1,1,2,0,0,1,1,2,1,1,2,1,2,3,3,
+2,0,3,3,1,2,1,1,3,2,0,3,2,0,0,0,
+0,0,0,0,0,1,2,3,2,1,1,2,1,1,2,1,
+1,2,1,1,3,2,0,3,3,2,0,3,3,1,3,1,
+2,0,0,0,1,1,2,1,2,0,3,3,1,2,0,1,
+2,3,2,1,1,2,1,1,2,0,0,1,2,0,3,2,
+1,2,0,0,0,0,0,3,2,0,0,1,2,0,3,3,
+2,0,0,3,3,1,3,2,3,2,0,1,2,0,3,2,
+1,1,3,2,3,2,0,1,1,2,1,1,3,1,2,1,
+2,3,3,1,2,1,2,0,3,2,1,2,0,0,0,3,
+3,2,0,3,3,1,2,0,1,1,2,0,0,0,1,1,
+2,0,1,2,3,3,1,3,2,0,0,0,3,3,1,3,
+1,2,1,1,3,2,0,3,3,1,3,2,0,3,3,2,
+3,3,1,2,0,1,1,2,1,1,2,0,0,1,1,2,
+1,2,0,3,3,1,2,1,2,3,2,1,2,0,3,2,
+0,1,2,0,3,2,0,0,0,0,1,1,2,1,2,3,
+3,1,3,2,3,3,1,2,0,1,1,3,2,0,0,0,
+3,3,2,0,0,0,0,3,2,1,1,2,0,0,0,1,
+1,2,1,2,0,3,2,1,2,3,2,1,1,2,0,1,
+2,0,3,3,1,3,2,3,2,0,1,2,0,3,2,1,
+2,3,2,0,0,0,1,2,3,3,1,3,1,2,1,2,
+3,2,1,2,0,3,2,1,2,0,0,0,3,3,1,2,
+1,1,2,1,2,0,3,2,1,1,2,0,0,1,1,2,
+0,1,1,3,2,0,0,0,0,3,2,0,1,1,3,2,
+0,3,3,2,0,0,3,3,2,0,0,0,0,3,2,1,
+1,2,1,1,3,1,2,0,0,0,1,2,0,3,3,2,
+3,2,0,1,2,0,0,0,0,0,0,0,0,3,2,0,
+1,1,2,1,1,3,2,0,0,0,0,0,0,0,0,0,
+0,0,3,3,2,0,0,3,2,0,0,0,0,1,1,3,
+2,3,2,1,2,3,2,0,0,0,0,0,1,2,0,0,
+0,0,0,3,3,2,0,0,3,2,1,1,3,2,0,0,
+3,2,0,1,1,2,0,1,2,3,2,0,1,1,3,2,
+3,3,1,3,2,3,3,1,2,0,0,0,1,1,3,1,
+2,1,2,3,3,2,3,3,1,2,0,1,2,0,0,0,
+3,3,2,3,3,2,3,3,1,2,1,2,3,3,2,3,
+2,1,2,0,0,0,0,3,3,2,3,2,1,2,0,0,
+3,2,1,1,2,1,2,0,0,0,3,2,1,1,3,2,
+3,2,0,0,1,1,2,1,2,3,3,2,3,3,2,0,
+3,3,1,2,1,2,0,0,3,3,1,2,0,1,2,3,
+2,0,1,2,0,0,0,0,3,3,2,3,2,1,2,3,
+3,1,2,1,2,0,0,3,2,1,1,3,2,0,0,0,
+0,0,0,3,3,1,3,1,2,0,1,1,3,2,3,3,
+1,3,2,0,3,3,1,3,1,2,1,1,2,1,2,0,
+0,3,3,2,0,3,3,1,3,2,3,2,0,1,2,0,
+0,0,0,3,3,1,3,2,0,0,0,3,2,1,1,3,
+2,0,0,0,3,2,0,1,1,3,2,0,0,3,3,2,
+        };
+
+        bool sign = signbit_(a);
+        a = abs_(a);
+
+        int exp;
+        double a_ = frexp(a, &exp);
+
+        uint64_t frac = frac_part(a_);
+        frac |= uint64_t(1) << EXP_OFFSET;
+
+        exp -= 53;
+
+        dd_real r = 0.;
+        int mod = 0;
+        for (int i = 0; i <= 53; ++i) {
+            int exp2 = i + exp;
+            if (exp2 >= 0 && ((uint64_t(1) << i) & frac)) {
+                r += modpio2_table[exp2];
+                mod += divpio2_mod4_table[exp2];
+            }
+        }
+        r += a - floor_(a);
+
+        for (; r >= dd_real::_pi / 4;) {
+            r -= dd_real::_pi / 2;
+            n += 1;
+        }
+        for (; r <= -dd_real::_pi / 4;) {
+            r += dd_real::_pi / 2;
+            n -= 1;
+        }
+        mod = mod % 4;
+        n = mod;
+
+        double r_ = to_double(r);
+        if (sign) {
+            n = -n;
+            if (n != 0) n += 4;
+            r_ = -r_;
+        }
+
+        return r_;
     }
 
     inline constexpr double sin_table[] = {
@@ -208,6 +515,20 @@ namespace fb {
         v = 1. - 1. / (1. * 2) * t * v;
         return v;
     }
+
+
+    inline constexpr double sin_can(double x)
+    {
+        size_t idx = get_nearest_phi(x);
+        x = x - phi_table[idx];
+        double s = sin_Taylor(x);
+        double c = cos_Taylor(x);
+        double sb = sin_table[idx];
+        double cb = cos_table[idx];
+        double v = c * sb + s * cb;
+        return v;
+    }
+
     inline constexpr double cos_(double x)
     {
         if (x == 0. || isnan_(x)) {
@@ -220,31 +541,26 @@ namespace fb {
             bool sign = false;
             if (x < 0) x = -x;
 
-            x = fmod_(x, 2 * _d_pi);
-            // [0, 2pi)
+            int n;
+            double a = mod_pio2(x, n);
 
-            if (x > _d_pi) {
-                x -= _d_pi;
-                sign = !sign;
-            }
-            // [0, pi)
+            // x = a + n*pi/2
 
-            if (x > _d_pi / 2.) {
-                x = _d_pi - x;
+            if (n >= 2) {
+                n -= 2;
                 sign = !sign;
             }
 
-            // [0, pi/2]
-            size_t idx = get_nearest_phi(x);
-            x = x - phi_table[idx];
-            double s = sin_Taylor(x);
-            double c = cos_Taylor(x);
-            double sb = sin_table[idx];
-            double cb = cos_table[idx];
-            double v = c * cb - s * sb;
-
-            if (v > 1) v = 1.;
-            else if (v < 0.) v = 0.;
+            double v;
+            if (n == 0) {
+                dd_real a_ = dd_real::_pi - a;
+                v = sin_can(to_double(a_));
+            } else {
+                if (a > 0)
+                    v = -sin_can(a);
+                else
+                    v = sin_can(-a);
+            }
 
             if (sign) return -v;
             else return v;
@@ -259,39 +575,34 @@ namespace fb {
         } else {
             // finite
 
-            bool sign = x < 0;
-            if (x < 0) x = -x;
-
-            x = fmod_(x, 2 * _d_pi);
-            // [0, 2pi)
-
-            if (x >= _d_pi) {
-                x -= _d_pi;
-                x -= _d_pi_t1;
-                if (x < 0) {
-                    x = -x;
-                } else {
-                    sign = !sign;
-                }
-            }
-            // [0, pi)
-
-            if (x > _d_pi / 2.) {
-                x = _d_pi - x;
-                x += _d_pi_t1;
+            bool sign = false;
+            if (x < 0) {
+                x = -x;
+                sign = !sign;
             }
 
-            // [0, pi/2]
-            size_t idx = get_nearest_phi(x);
-            x = x - phi_table[idx];
-            double s = sin_Taylor(x);
-            double c = cos_Taylor(x);
-            double sb = sin_table[idx];
-            double cb = cos_table[idx];
-            double v = s * cb + c * sb;
+            int n;
+            double a = mod_pio2(x, n);
 
-            if (v > 1) v = 1.;
-            else if (v < 0.) v = 0.;
+            // x = a + n*pi/2
+
+            if (n >= 2) {
+                n -= 2;
+                sign = !sign;
+            }
+
+            double v;
+            if (n == 0) {
+                if (a > 0)
+                    v = sin_can(a);
+                else
+                    v = -sin_can(-a);
+            } else {
+                if (a > 0)
+                    v = sin_can(_d_pi - a);
+                else
+                    v = -sin_can(_d_pi - a);
+            }
 
             if (sign) return -v;
             else return v;
@@ -519,6 +830,31 @@ namespace fb {
         return expx;
     }
 
+    inline constexpr double exp2_(double a) noexcept
+    {
+        if (a == 0.) return 1;
+        else if (isinf_(a) && a < 0.) {
+            return 0.;
+        } else if (isinf(a) && a > 0.) {
+            return a;
+        } else if (isnan(a)) {
+            return _d_nan;
+        } else {
+            double frac = a - floor_(a);
+            if (floor_(a) >= INT_MAX) {
+                return _infinity;
+            } else if (floor_(a) <= INT_MIN) {
+                return 0.;
+            }
+            double int_ = (int)floor_(a);
+            // 2^ frac = exp(frac/ln(2))
+            frac /= _d_ln2;
+            double base = exp_(frac);
+            base = ldexp(base, int_);
+            return base;
+        }
+    }
+
     inline constexpr double expm1_(double a) noexcept
     {
         int n;
@@ -596,17 +932,31 @@ namespace fb {
     {
         x = abs_(x);
         y = abs_(y);
+
+        if (isinf_(x)) {
+            return x;
+        } else if (isinf_(y)) {
+            return y;
+        } else if(x == 0.) {
+            return y;
+        } else if (y == 0.) {
+            return x;
+        } else if (isnan_(x) || isnan_(y)) {
+            return _d_nan;
+        }
+
+        // x, y are all non-zero finite
+
         if (x < y) {
             swap_(x, y);
         }
-        if (y == 0.) {
-            return x;
-        }
         // x >= y
-        int a;
-        x = frexp_(x, &a);
-        y = ldexp_(y, -a);
 
+        int exp;
+        x = frexp_(x, &exp);
+        y = ldexp_(y, -exp);
+
+#if 0
         double err1, err2, err3, err4, err5;
         double x2 = two_prod(x, x, err1);
         double y2 = two_prod(y, y, err2);
@@ -620,8 +970,64 @@ namespace fb {
         // = sqrt(r^2 - err4 + err5 + err3 + err1 + err2)
         // sqrt(x^2 + y^2) = r + 0.5 (sum err) / r
         r += 0.5 * (err1 + err2 + err3 - err4 + err5) / r;
+#else
 
-        r = ldexp_(r, a);
+        dd_real dd_x = x;
+        dd_real dd_y = y;
+        dd_real r2 = dd_x * dd_x + dd_y * dd_y;
+        dd_real dd_r = sqrt_(x * x + y * y);
+        // Newton's method to sqrt
+        dd_r = 0.5 * (r2 / dd_r + dd_r);
+        dd_r = 0.5 * (r2 / dd_r + dd_r);
+        double r = to_double(dd_r);
+
+#endif
+        r = ldexp_(r, exp);
+        return r;
+    }
+
+    inline constexpr double hypot_(double x, double y, double z)
+    {
+        x = abs_(x);
+        y = abs_(y);
+        z = abs_(z);
+
+        if (isinf_(x) || isinf_(y) || isinf_(z)) {
+            return _infinity;
+        } else if (isnan_(x) || isnan_(y) || isnan_(z)) {
+            return _d_nan;
+        }
+
+        // x, y, z are all finite
+        if (x < y) {
+            swap_(x, y);
+        }
+        if (x < z) {
+            swap_(x, z);
+        }
+
+        // x >= y, z
+        if (x == 0.) {
+            return 0.;
+        }
+
+        int exp;
+        x = frexp_(x, &exp);
+        y = ldexp_(y, -exp);
+        z = ldexp_(z, -exp);
+
+        dd_real dd_x = x;
+        dd_real dd_y = y;
+        dd_real dd_z = z;
+        dd_real r2 = dd_x * dd_x + dd_y * dd_y + dd_z * dd_z;
+        dd_real dd_r = sqrt_(x * x + y * y + z * z);
+        // Newton's method to sqrt
+        dd_r = 0.5 * (r2 / dd_r + dd_r);
+        dd_r = 0.5 * (r2 / dd_r + dd_r);
+        dd_r = 0.5 * (r2 / dd_r + dd_r);
+        double r = to_double(dd_r);
+
+        r = ldexp_(r, exp);
         return r;
     }
 
