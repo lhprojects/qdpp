@@ -10,8 +10,8 @@
  * Contains implementation of non-inlined functions of double-double
  * package.  Inlined functions are found in dd_inline.h (in include directory).
  */
-#ifndef QD_DD_MATH_H
-#define QD_DD_MATH_H
+#ifndef _QD_DD_MATH_H
+#define _QD_DD_MATH_H
 #include <cstdlib>
 #include <cstdio>
 #include <cmath>

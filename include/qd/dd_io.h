@@ -1,5 +1,5 @@
-#ifndef QD_DD_IO_H
-#define QD_DD_IO_H
+#ifndef _QD_DD_IO_H
+#define _QD_DD_IO_H
 
 #include "dd_real.h"
 #include "dd_math.h"

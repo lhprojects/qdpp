@@ -17,10 +17,6 @@
 #include "two_basics.h"
 #include "double_basics.h"
 
-#ifndef QD_INLINE
-#define inline
-#endif
-
 /********** Constructors **********/
 inline QD_CONSTEXPR qd_real::qd_real(double x0, double x1, double x2, double x3) : x() {
   x[0] = x0;

@@ -4,15 +4,6 @@
 
 #include "config.h"
 
-#ifndef QD_API
-#define QD_API /**/
-#endif
-
-/* Set to 1 if using VisualAge C++ compiler for __fmadd builtin. */
-#ifndef QD_VACPP_BUILTINS_H
-/* #undef QD_VACPP_BUILTINS_H */
-#endif
-
 /* If fused multiply-add is available, define to correct macro for
    using it.  It is invoked as QD_FMA(a, b, c) to compute fl(a * b + c). 
    If correctly rounded multiply-add is not available (or if unsure), 
@@ -29,21 +20,6 @@
 /* #undef QD_FMS */
 #endif
 
-/* Set the following to 1 to define commonly used function
-   to be inlined.  This should be set to 1 unless the compiler 
-   does not support the "inline" keyword, or if building for 
-   debugging purposes. */
-#ifndef QD_INLINE
-#define QD_INLINE 1
-#endif
-
-/* Set the following to 1 to use ANSI C++ standard header files
-   such as cmath, iostream, etc.  If set to zero, it will try to 
-   include math.h, iostream.h, etc, instead. */
-#ifndef QD_HAVE_STD
-#define QD_HAVE_STD 1
-#endif
-
 /* Set the following to 1 to make the addition and subtraction
    to satisfy the IEEE-style error bound 
 
@@ -56,38 +32,35 @@
 
    where |d1| <= eps and |d2| eps.           */
 #ifndef QD_IEEE_ADD
-/* #undef QD_IEEE_ADD */
-/*#define QD_IEEE_ADD 1 //HL: */ 
+#define QD_IEEE_ADD 1
 #endif
 
 /* Set the following to 1 to use slightly inaccurate but faster
    version of multiplication. */
-#ifndef QD_SLOPPY_MUL
-#define QD_SLOPPY_MUL 1
-#undef QD_SLOPPY_MUL /*HL: */
-#endif
+// #define QD_SLOPPY_MUL 1
 
 /* Set the following to 1 to use slightly inaccurate but faster
    version of division. */
-#ifndef QD_SLOPPY_DIV
-#define QD_SLOPPY_DIV 1
-#undef QD_SLOPPY_DIV  /*HL: */
-#endif
+// #define QD_SLOPPY_DIV 1
 
 /* Define this macro to be the isfinite(x) function. */
 #ifndef QD_ISFINITE
-#define QD_ISFINITE(x) qd_isfinite(x)
+#define QD_ISFINITE(x) fb::isfinite(x)
 #endif
 
 /* Define this macro to be the isinf(x) function. */
 #ifndef QD_ISINF
-#define QD_ISINF(x) qd_isinf(x)
+#define QD_ISINF(x) fb::isinf(x)
 #endif
 
 /* Define this macro to be the isnan(x) function. */
 #ifndef QD_ISNAN
-#define QD_ISNAN(x) qd_isnan(x)
+#define QD_ISNAN(x) fb::isnan(x)
 
 #endif
+
+/* For C++ only, inline constexpr */
+#define QD_CONSTEXPR constexpr
+#define QD_HAS_CONSTEXPR 1
 
 #endif /* _QD_QD_CONFIG_H */

@@ -14,6 +14,7 @@
 #define _QD_DD_INLINE_H
 
 #include <cmath>
+#include "qd_config.h"
 #include "two_basics.h"
 #include "double_basics.h"
 #include "util.h"

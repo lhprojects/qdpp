@@ -16,22 +16,13 @@
 #include <cmath>
 #include <climits>
 
-#include "config.h"
-#include <qd/two_basics.h>
-#include <qd/bits.h>
-#include <qd/double_basics.h>
+#include "qd_config.h"
+#include "two_basics.h"
+#include "double_basics.h"
+#include "qd/bits.h"
 
-//HL: ...
-#if 0
-#ifdef HAVE_IEEEFP_H
-#include <ieeefp.h>
-#endif
-#endif
-//HL: ...
 
-using std::setw;
-
-int get_double_expn(double x) {
+inline int get_double_expn(double x) {
   if (x == 0.0)
     return INT_MIN;
   if (QD_ISINF(x) || QD_ISNAN(x))
@@ -55,12 +46,12 @@ int get_double_expn(double x) {
   return 0;
 }
 
-void print_double_info(std::ostream &os, double x) {
+inline void print_double_info(std::ostream &os, double x) {
   std::streamsize old_prec = os.precision(19);
   std::ios_base::fmtflags old_flags  = os.flags();
   os << std::scientific;
 
-  os << setw(27) << x << ' ';
+  os << std::setw(27) << x << ' ';
   if (QD_ISNAN(x) || QD_ISINF(x) || (x == 0.0)) {
     os << "                                                           ";
   } else {
@@ -68,7 +59,7 @@ void print_double_info(std::ostream &os, double x) {
     x = std::abs(x);
     int expn = get_double_expn(x);
     double d = std::ldexp(1.0, expn);
-    os << setw(5) << expn << " ";
+    os << std::setw(5) << expn << " ";
     for (int i = 0; i < 53; i++) {
       if (x >= d) {
         x -= d;

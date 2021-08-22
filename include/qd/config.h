@@ -128,34 +128,6 @@
 /* Define to 1 if your compiler have the C++ standard include files. */
 #define QD_HAVE_STD 1
 
-/* Define to 1 to use additions with IEEE-style error bounds. */
-/* #undef QD_IEEE_ADD */
-
-/* Define to 1 to inline commonly used functions. */
-#define QD_INLINE 1
-
-/* Define this macro to be the isfinite(x) function. */
-#define QD_ISFINITE(x) fb::isfinite(x)
-
-/* Define this macro to be the isinf(x) function. */
-#define QD_ISINF(x) fb::isinf(x)
-
-/* Define this macro to be the isnan(x) function. */
-#define QD_ISNAN(x) fb::isnan(x)
-
-/* Define to 1 to use sloppy division (which is faster by slightly
-   inaccurate). */
-#define QD_SLOPPY_DIV
-#undef QD_SLOPPY_DIV //HL:
-
-/* Define to 1 to use sloppy multiplication (which is faster by slightly
-   inaccurate). */
-#define QD_SLOPPY_MUL
-#undef QD_SLOPPY_MUL //HL:
-
-/* Set to 1 if using VisualAge C++ compiler for __fmadd builtin. */
-/* #undef QD_VACPP_BUILTINS_H */
-
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
@@ -170,12 +142,5 @@
 
 /* Whether to use x86 fpu fix. */
 #define X86 1
-
-
-
-
-/* For C++ only, inline constexpr */
-#define QD_CONSTEXPR constexpr
-#define QD_HAS_CONSTEXPR 1
 
 #endif

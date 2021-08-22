@@ -28,6 +28,6 @@ int get_double_expn(double x);
    prints out the strings NaN, +/- INF, and 0.             */
 void print_double_info(std::ostream &os, double x);
 
-
+#include "bits.inl.h"  
 #endif  /* _QD_BITS_H */
 

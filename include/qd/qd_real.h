@@ -26,8 +26,8 @@
 #include <iostream>
 #include <string>
 #include <limits>
-#include <qd/qd_config.h>
-#include <qd/dd_real.h>
+#include "qd_config.h"
+#include "dd_real.h"
 #include "fpu.h"
 
 struct QD_API qd_real {
