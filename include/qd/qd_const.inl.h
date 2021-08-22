@@ -9,8 +9,8 @@
  *
  * Defines constants used in quad-double package.
  */
-#include "config.h"
-#include <qd/qd_real.h>
+#include "qd_config.h"
+#include "two_basics.h"
 
 /* Some useful constants. */
 inline QD_CONSTEXPR const qd_real qd_real::_2pi = qd_real(6.283185307179586232e+00,

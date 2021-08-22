@@ -329,24 +329,61 @@ void test_5() {
 
 void test_log()
 {
-	dd_real a1 = 1. + dd_real(ldexp(1.234, -1));
-	dd_real a2 = 1. + dd_real(ldexp(1.234, -5));
-	dd_real a3 = 1. + dd_real(ldexp(1.234, -10));
-	dd_real a4 = 1. + dd_real(ldexp(1.234, -20));
-	dd_real a5 = 1. + dd_real(ldexp(1.234, -30));
-	dd_real a6 = 1. + dd_real(ldexp(1.234, -40));
-	dd_real a7 = 1. + dd_real(ldexp(1.234, -50));
-	dd_real a8 = 1. + dd_real(ldexp(1.234, -70));
-	dd_real a9 = 1. + dd_real(ldexp(1.234, -90));
-	dd_real a10 = 1. + dd_real(ldexp(1.234, -110));
-	dd_real a11 = 1. + dd_real(ldexp(1.234, -130));
+	{
+		dd_real a1 = 2.;
+		dd_real a = log(a1);
+		dd_real ref = dd_real::read("0.693147180559945309417232121458176568075500134360255");
+		QdAssert(fabs(to_double(a / ref - 1.)) / dd_real::_eps < 4);
+	}
 
-	dd_real a = log(a1);
-	dd_real ref;
-	dd_real::read("0.0000000000010004441719497206982153054153351990365187", ref);
-    printf("%.20E", to_double(a / ref - 1.));
+	{
+		dd_real a1 = 1. + dd_real(ldexp(0.9990234375, -1));
+		dd_real a = log(a1);
+		dd_real ref = dd_real::read("0.40513953428142396425401455828287536809888916586806444");
+		QdAssert(fabs(to_double(a / ref - 1.)) / dd_real::_eps < 4);
+	}
+	{
+		dd_real a1 = 1. + dd_real(ldexp(0.9990234375, -10));
+		dd_real a = log(a1);
+		dd_real ref = dd_real::read("0.00097513322869915911147780634863041169586551321001853317");
+		QdAssert(fabs(to_double(a / ref - 1.)) / dd_real::_eps < 4);
+	}
+	{
+		dd_real a1 = 1. + dd_real(ldexp(0.9990234375, -20));
+		dd_real a = log(a1);
+		dd_real ref = dd_real::read("0.00000095274253997231664801869224953591596729340018178035198");
+		QdAssert(fabs(to_double(a / ref - 1.)) / dd_real::_eps < 4);
+	}
 }
 
+void test_asinh()
+{
+	{
+		dd_real a1 = 2;
+		dd_real a = asinh(a1);
+		dd_real ref = dd_real::read("1.4436354751788103424932767402731052694055530031569805");
+		QdAssert(fabs(to_double(a / ref - 1.)) / dd_real::_eps < 4);
+	}
+
+	{
+		dd_real a1 = -2;
+		dd_real a = asinh(a1);
+		dd_real ref = dd_real::read("-1.4436354751788103424932767402731052694055530031569805");
+		QdAssert(fabs(to_double(a / ref - 1.)) / dd_real::_eps < 4);
+	}
+	{
+		dd_real a1 = 1. / 1024;
+		dd_real a = asinh(a1);
+		dd_real ref = dd_real::read("0.00097656234477963751076391095890851381048161859275417364");
+		QdAssert(fabs(to_double(a / ref - 1.)) / dd_real::_eps < 4);
+	}
+	{
+		dd_real a1 = -1. / 1024;
+		dd_real a = asinh(a1);
+		dd_real ref = dd_real::read("-0.00097656234477963751076391095890851381048161859275417364");
+		QdAssert(fabs(to_double(a / ref - 1.)) / dd_real::_eps < 4);
+	}
+}
 
 #if 0
 #include "qd/unused/DecimalFloat.h"
@@ -425,6 +462,11 @@ void foo()
 
 int main() {
 
+	qd_real qdpi  = qd_real::_pi;
+	int nd = qd_real::_ndigits;
+	dd_real t = dd_real::add(1., -ldexp(1, -60));
+	dd_real tt = floor(t);
+
 	QdAssert(to_int("0") == 0);
 	QdAssert(to_int("1") == 1);
 	QdAssert(to_int("2") == 2);
@@ -451,6 +493,7 @@ int main() {
     a = dd_real::read("3");
 
 	test_log();
+	test_asinh();
 	constexpr dd_real sqrt1 = sqrt(dd_real(1.));
 	constexpr dd_real sin1 = sin(dd_real(1.));
 	constexpr dd_real cos1 = cos(dd_real(1.));

@@ -286,6 +286,14 @@ namespace fb {
         }
     }
 
+    inline constexpr double log1p(double x)
+    {
+        if (std::is_constant_evaluated()) {
+            return log1p_(x);
+        } else {
+            return std::log1p(x);
+        }
+    }
 
     inline constexpr double log10_(double x) noexcept
     {

@@ -163,6 +163,7 @@ namespace std {
   };
 }
 
+
 QD_API qd_real polyeval(const qd_real *c, int n, const qd_real &x);
 QD_API qd_real polyroot(const qd_real *c, int n, 
     const qd_real &x0, int max_iter = 64, double thresh = 0.0);
@@ -296,11 +297,8 @@ QD_API qd_real fmod(const qd_real &a, const qd_real &b);
 QD_API std::ostream &operator<<(std::ostream &s, const qd_real &a);
 QD_API std::istream &operator>>(std::istream &s, qd_real &a);
 
-#ifdef QD_INLINE
-#include <qd/qd_inline.h>
-#endif
-
-#include <qd/qd_const.inl.h>
+#include "qd_inline.h"
+#include "qd_const.inl.h"
 #include <qd/qd_real.inl.h>
 
 #endif /* _QD_QD_REAL_H */

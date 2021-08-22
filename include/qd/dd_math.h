@@ -342,6 +342,15 @@ inline QD_CONSTEXPR dd_real expm1(const dd_real& a)
     }
 }
 
+inline QD_CONSTEXPR dd_real log1p_smallfrac(const dd_real& frac)
+{
+    dd_real x = fb::log1p(frac.x[0]);   /* Initial approximation */
+    dd_real expm1_ = expm1(x);
+    dd_real a_1 = frac;
+    x = x + (a_1 - expm1_) / (1. + expm1_);
+    return x;
+}
+
 /* Logarithm.  Computes log(x) in double-double precision.
    This is a natural logarithm (i.e., base e).            */
 inline QD_CONSTEXPR dd_real log(const dd_real &a) {
@@ -366,37 +375,12 @@ inline QD_CONSTEXPR dd_real log(const dd_real &a) {
   }
 
   if (a.x[0] <= 0.0) {
-    //dd_real::error("(dd_real::log): Non-positive argument.");
     return dd_real::_nan;
   }
 
 
-// what is the real precision of fb::log(a.x[0])?
-// 1.00??|????
-// since the a.x[0] is trunced
-// we have only two effective digits for fb::log(x)
-// but the result should achive six
-  if ((fb::abs(a.x[0]) - 1.) <= 1E-6) {
-      dd_real z1 = a - 1.;
-      dd_real z2 = a + 1;
-      dd_real z3 = z1 / z2;
-      dd_real z4 = sqr(z3); // < 1E-12
-      
-      dd_real t = 0.;
-      t = t * z4 + 1 / 5.; // 1E-36
-      t = t * z4 + 1 / 3.; // 1E-24
-      t = t * z4 + 1 / 1.; // 1E-12
-      t = mul_pwr2(z3, 2.0) * t;
-      return t;
-  } else if (fb::abs(a.x[0] - 1.) < 0.5) {
-      dd_real x = fb::log(a.x[0]);   /* Initial approximation */
-      // f(x) = x + (a_ - expm1(x)) * exp(-x) where a_ = a - 1
-      // we have at least 9 effective digits
-      dd_real a_ = a - 1;
-      x = x + (a_ - expm1(x)) * exp(-x); // 9
-      x = x + (a_ - expm1(x)) * exp(-x); // 18
-      x = x + (a_ - expm1(x)) * exp(-x); // 36
-      return x;
+  if (fb::abs(a.x[0] - 1.) < 0.5) {
+      return log1p_smallfrac(a - 1.);
   } else {
       dd_real x = fb::log(a.x[0]);   /* Initial approximation */
       x = x + a * exp(-x) - 1.0;
@@ -405,6 +389,15 @@ inline QD_CONSTEXPR dd_real log(const dd_real &a) {
 
 }
 
+inline QD_CONSTEXPR dd_real log1p(const dd_real& a)
+{
+    dd_real aabs = fabs(a);
+    if (aabs < 0.5) {
+        return log1p_smallfrac(a);
+    } else {
+        return log(1. + a);
+    }
+}
 
 inline QD_CONSTEXPR dd_real log10(const dd_real &a) {
   return log(a) / dd_real::_log10;
@@ -878,25 +871,33 @@ inline void QD_CONSTEXPR sincosh(const dd_real &a, dd_real &sinh_a, dd_real &cos
 }
 
 inline dd_real QD_CONSTEXPR asinh(const dd_real &a) {
-  return log(a + sqrt(sqr(a) + 1.0));
+    dd_real a2 = sqr(a);
+    dd_real r = a2 + 1.0;
+    if (a2 <= 0.25) {
+        if (a >= 0.)
+            return log1p(a + a2 / (1. + sqrt(r)));
+        else
+            return -log1p(-a + a2 / (1. + sqrt(r)));
+    } else {
+        if (a >= 0.)
+            return log(a + sqrt(r));
+        else
+            return -log(-a + sqrt(r));
+    }
 }
 
 inline dd_real QD_CONSTEXPR acosh(const dd_real &a) {
-  if (a < 1.0) {
-    //dd_real::error("(dd_real::acosh): Argument out of domain.");
-    return dd_real::_nan;
-  }
-
-  return log(a + sqrt(sqr(a) - 1.0));
+    if (a < 1.0) {
+        return dd_real::_nan;
+    }
+    return log(a + sqrt(sqr(a) - 1.0));
 }
 
 inline QD_CONSTEXPR dd_real atanh(const dd_real &a) {
-  if (abs(a) >= 1.0) {
-    //dd_real::error("(dd_real::atanh): Argument out of domain.");
-    return dd_real::_nan;
-  }
-
-  return mul_pwr2(log((1.0 + a) / (1.0 - a)), 0.5);
+    if (abs(a) >= 1.0) {
+        return dd_real::_nan;
+    }
+    return mul_pwr2(log((1.0 + a) / (1.0 - a)), 0.5);
 }
 
 inline QD_CONSTEXPR dd_real fmod(const dd_real &a, const dd_real &b) {
@@ -913,7 +914,7 @@ inline constexpr dd_real nint(const dd_real& a)
 
     if (hi == a.x[0]) {
         /* High word is an integer already.  Round the low word.*/
-        lo = qd::nint(a.x[1]);
+        lo = fb::round(a.x[1]);
 
         /* Renormalize. This is needed if x[0] = some integer, x[1] = 1/2.*/
         hi = qd::quick_two_sum(hi, lo, lo);

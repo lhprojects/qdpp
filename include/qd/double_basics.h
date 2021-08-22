@@ -468,7 +468,7 @@ namespace fb {
                 return x_;
             } else if (a == EXP_MIN - 1) {
                 return _subnorm_min;
-            } else if (a < EXP_MIN - 1) {
+            } else {
                 return copysign(0, x);
             }
         }
