@@ -311,7 +311,7 @@ inline QD_CONSTEXPR qd_real qd_real::ieee_add(const qd_real &a, const qd_real &b
       t = b[j++];
     else if (j >= 4)
       t = a[i++];
-    else if (std::abs(a[i]) > std::abs(b[j])) {
+    else if (fb::abs(a[i]) > fb::abs(b[j])) {
       t = a[i++];
     } else
       t = b[j++];
@@ -1029,9 +1029,9 @@ inline qd_real qd_real::rand() {
   return qdrand();
 }
 
-inline qd_real ldexp(const qd_real &a, int n) {
-  return qd_real(std::ldexp(a[0], n), std::ldexp(a[1], n), 
-                 std::ldexp(a[2], n), std::ldexp(a[3], n));
+inline QD_CONSTEXPR qd_real ldexp(const qd_real &a, int n) {
+  return qd_real(fb::ldexp(a[0], n), fb::ldexp(a[1], n), 
+                 fb::ldexp(a[2], n), fb::ldexp(a[3], n));
 }
 
 #endif /* _QD_QD_INLINE_H */

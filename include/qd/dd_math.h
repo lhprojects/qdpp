@@ -50,6 +50,7 @@ QD_API constexpr dd_real sqrt(const dd_real& a);
 QD_API constexpr dd_real nroot(const dd_real& a, int n);
 
 constexpr dd_real nint(const dd_real& a);
+constexpr dd_real round(const dd_real& a);
 constexpr dd_real floor(const dd_real& a);
 constexpr dd_real ceil(const dd_real& a);
 constexpr dd_real aint(const dd_real& a);
@@ -658,14 +659,14 @@ inline QD_CONSTEXPR void sincos(const dd_real &a, dd_real &sin_a, dd_real &cos_a
 
   // approximately reduce module pi/2 and pi/16
   dd_real t;
-  double q = std::floor(r.x[0] / dd_real::_pi2.x[0] + 0.5);
+  double q = fb::floor(r.x[0] / dd_real::_pi2.x[0] + 0.5);
   t = r - dd_real::_pi2 * q;
   int j = static_cast<int>(q);
-  int abs_j = std::abs(j);
-  q = std::floor(t.x[0] / _pi16.x[0] + 0.5);
+  int abs_j = fb::abs(j);
+  q = fb::floor(t.x[0] / _pi16.x[0] + 0.5);
   t -= _pi16 * q;
   int k = static_cast<int>(q);
-  int abs_k = std::abs(k);
+  int abs_k = fb::abs(k);
 
   if (abs_j > 2) {
     //dd_real::error("(dd_real::sincos): Cannot reduce modulo pi/2.");
@@ -780,17 +781,16 @@ inline dd_real QD_CONSTEXPR atan2(const dd_real &y, const dd_real &x) {
   return z;
 }
 
-inline dd_real QD_CONSTEXPR tan(const dd_real &a) {
+inline QD_CONSTEXPR dd_real tan(const dd_real &a) {
   dd_real s, c;
   sincos(a, s, c);
   return s/c;
 }
 
-inline dd_real QD_CONSTEXPR asin(const dd_real &a) {
+inline QD_CONSTEXPR dd_real asin(const dd_real &a) {
   dd_real abs_a = abs(a);
 
   if (abs_a > 1.0) {
-    //dd_real::error("(dd_real::asin): Argument out of domain.");
     return dd_real::_nan;
   }
 
@@ -801,7 +801,7 @@ inline dd_real QD_CONSTEXPR asin(const dd_real &a) {
   return atan2(a, sqrt(1.0 - sqr(a)));
 }
 
-inline dd_real QD_CONSTEXPR acos(const dd_real &a) {
+inline QD_CONSTEXPR dd_real acos(const dd_real &a) {
   dd_real abs_a = abs(a);
 
   if (abs_a > 1.0) {
@@ -816,7 +816,7 @@ inline dd_real QD_CONSTEXPR acos(const dd_real &a) {
   return atan2(sqrt(1.0 - sqr(a)), a);
 }
  
-inline dd_real QD_CONSTEXPR sinh(const dd_real &a) {
+inline QD_CONSTEXPR dd_real sinh(const dd_real &a) {
   if (a.is_zero()) {
     return 0.0;
   }
@@ -832,7 +832,7 @@ inline dd_real QD_CONSTEXPR sinh(const dd_real &a) {
   dd_real t = a;
   dd_real r = sqr(t);
   double m = 1.0;
-  double thresh = std::abs((to_double(a)) * dd_real::_eps);
+  double thresh = fb::abs((to_double(a)) * dd_real::_eps);
 
   do {
     m += 2.0;
@@ -907,7 +907,7 @@ inline QD_CONSTEXPR dd_real fmod(const dd_real &a, const dd_real &b) {
 
 
 /* Round to Nearest integer */
-inline constexpr dd_real nint(const dd_real& a)
+inline QD_CONSTEXPR dd_real nint(const dd_real& a)
 {
     double hi = fb::round(a.x[0]);
     double lo;
@@ -929,6 +929,11 @@ inline constexpr dd_real nint(const dd_real& a)
     }
 
     return dd_real(hi, lo);
+}
+
+inline QD_CONSTEXPR dd_real round(const dd_real& a)
+{
+    return nint(a);
 }
 
 inline constexpr dd_real floor(const dd_real& a)

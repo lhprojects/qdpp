@@ -460,7 +460,54 @@ void foo()
 }
 #endif
 
+void test_constexpr()
+{
+    QD_CONSTEXPR dd_real sqrt1 = sqrt(dd_real(1.));
+
+    QD_CONSTEXPR dd_real sin1 = sin(dd_real(1.));
+    QD_CONSTEXPR dd_real cos1 = cos(dd_real(1.));
+    QD_CONSTEXPR dd_real tan1 = tan(dd_real(1.));
+    QD_CONSTEXPR dd_real asin1 = asin(dd_real(1.));
+    QD_CONSTEXPR dd_real acos1 = acos(dd_real(1.));
+    QD_CONSTEXPR dd_real atan1 = atan(dd_real(1.));
+
+    QD_CONSTEXPR dd_real exp2 = exp(dd_real(2.));
+    QD_CONSTEXPR dd_real log2 = log(dd_real(2.));
+    QD_CONSTEXPR dd_real sinh2 = sinh(dd_real(2.));
+	QD_CONSTEXPR dd_real sinh0d01 = sinh(dd_real(0.01));
+	QD_CONSTEXPR dd_real cosh2 = cosh(dd_real(2.));
+    QD_CONSTEXPR dd_real tanh2 = tanh(dd_real(2.));
+	QD_CONSTEXPR dd_real asinh2 = asinh(dd_real(2.));
+	QD_CONSTEXPR dd_real acosh2 = acosh(dd_real(2.));
+    QD_CONSTEXPR dd_real atanh2 = atanh(dd_real(2.));
+}
+
+void test_constexpr_qd()
+{
+	QD_CONSTEXPR qd_real sqrt1 = sqrt(qd_real(1.));
+
+	QD_CONSTEXPR qd_real sin1 = sin(qd_real(1.));
+	QD_CONSTEXPR qd_real cos1 = cos(qd_real(1.));
+	QD_CONSTEXPR qd_real tan1 = tan(qd_real(1.));
+	QD_CONSTEXPR qd_real asin1 = asin(qd_real(1.));
+	QD_CONSTEXPR qd_real acos1 = acos(qd_real(1.));
+	QD_CONSTEXPR qd_real atan1 = atan(qd_real(1.));
+
+	QD_CONSTEXPR qd_real exp2 = exp(qd_real(2.));
+	QD_CONSTEXPR qd_real log2 = log(qd_real(2.));
+	QD_CONSTEXPR qd_real sinh2 = sinh(qd_real(2.));
+	QD_CONSTEXPR qd_real sinh0d01 = sinh(qd_real(0.01));
+	QD_CONSTEXPR qd_real cosh2 = cosh(qd_real(2.));
+	QD_CONSTEXPR qd_real tanh2 = tanh(qd_real(2.));
+	QD_CONSTEXPR qd_real asinh2 = asinh(qd_real(2.));
+	QD_CONSTEXPR qd_real acosh2 = acosh(qd_real(2.));
+	QD_CONSTEXPR qd_real atanh2 = atanh(qd_real(2.));
+}
+
 int main() {
+
+	test_constexpr();
+	test_constexpr_qd();
 
 	qd_real qdpi  = qd_real::_pi;
 	int nd = qd_real::_ndigits;
@@ -494,11 +541,6 @@ int main() {
 
 	test_log();
 	test_asinh();
-	constexpr dd_real sqrt1 = sqrt(dd_real(1.));
-	constexpr dd_real sin1 = sin(dd_real(1.));
-	constexpr dd_real cos1 = cos(dd_real(1.));
-	constexpr dd_real exp2 = exp(dd_real(2.));
-	constexpr dd_real log2 = log(dd_real(2.));
 	test_cmp();
 	test_1();
 	test_2();

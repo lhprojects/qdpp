@@ -44,13 +44,19 @@ public:
   void test2();
   void test3();
   void test4();
-  void test5();
-  void test6();
   void test7();
-  void test8();
-  void test9();
   void testall();
   T pi();
+
+
+
+  double factor() const
+  {
+      if (sizeof(T) == sizeof(double)) return 1.;
+      else if (sizeof(T) == sizeof(dd_real)) return 1 / 30.;
+      else if (sizeof(T) == sizeof(qd_real)) return 1 / 1000.;
+      return 1;
+  }
 };
 
 template <class T>
@@ -59,11 +65,9 @@ T TestSuite<T>::pi() { return T::_pi; }
 template <>
 double TestSuite<double>::pi() { return 3.141592653589793116; }
 
-void print_timing(double nops, double t) {
-  double mops = 1.0e-6 * nops / t;
-  cout << fixed;
-  cout << setprecision(6) << setw(10) << 1.0 / mops << " us";
-  cout << setprecision(4) << setw(10) << mops << " mop/s" << endl;
+void print_timing(double nops, double t, char const *com) {
+    double mops = 1.0e-6 * nops / t;
+    printf("%25s:  %10.6f us  %10.4f MOP/s\n", com, 1./mops, mops);
 }
 
 template <class T>
@@ -74,7 +78,7 @@ void TestSuite<T>::test1() {
   }
 
   //int n = 100000, i;
-  int n = 100000000, i;
+  int n = 100000000* factor(), i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -97,11 +101,9 @@ void TestSuite<T>::test1() {
     cout << "n = " << n << "   t = " << t << endl;
     cout << "r = " << b1+b2+b3+b4 << endl;
     cout << 4*n << " operations in " << t << " s." << endl;
-  } else {
-    cout << "   add: ";
   }
 
-  print_timing(4.0*n, t);
+  print_timing(4.0*n, t, "add");
 }
 
 template <class T>
@@ -112,7 +114,7 @@ void TestSuite<T>::test2() {
   }
 
   //int n = 100000, i;
-  int n = 100000000, i;
+  int n = 100000000 * factor(), i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -135,11 +137,9 @@ void TestSuite<T>::test2() {
     cout << "n = " << n << "   t = " << t << endl;
     cout << "r = " << b1+b2+b3+b4 << endl;
     cout << 4*n << " operations in " << t << " s." << endl;
-  } else {
-    cout << "   mul: ";
   }
 
-  print_timing(4.0*n, t);
+  print_timing(4.0*n, t, "mul");
 }
 
 template <class T>
@@ -150,7 +150,7 @@ void TestSuite<T>::test3() {
   }
 
   //int n = 100000, i;
-  int n = 10000000, i;
+  int n = 10000000 * factor(), i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -173,11 +173,9 @@ void TestSuite<T>::test3() {
     cout << "n = " << n << "   t = " << t << endl;
     cout << "r = " << b1+b2+b3+b4 << endl;
     cout << 4*n << " operations in " << t << " s." << endl;
-  } else {
-    cout << "   div: ";
   }
 
-  print_timing(4.0*n, t);
+  print_timing(4.0*n, t, "div");
 }
 
 template <class T>
@@ -188,7 +186,7 @@ void TestSuite<T>::test4() {
   }
 
   //int n = 10000, i;
-  int n = 10000000, i;
+  int n = 10000000 * factor(), i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -211,80 +209,11 @@ void TestSuite<T>::test4() {
     cout << "n = " << n << "   t = " << t << endl;
     cout << "r = " << a1+a2+a3+a4 << endl;
     cout << 4*n << " operations in " << t << " s." << endl;
-  } else {
-    cout << "  sqrt: ";
   }
 
-  print_timing(4.0*n, t);
+  print_timing(4.0*n, t, "sqrt");
 }
 
-template <class T>
-void TestSuite<T>::test5() {
-  if (flag_verbose) {
-    cout << endl;
-    cout << "Timing sin ..." << endl;
-  }
-
-  //int n = 4000, i;
-  int n = 4000000, i;
-  tictoc tv;
-  double t;
-  n *= long_factor;
-
-  T a = 0.0;
-  T b = 3.0 * pi() / static_cast<double>(n);
-  T c = 0.0;
-
-  tic(&tv);
-  for (i = 0; i < n; i++) {
-    a += b;
-    c += sin(a);
-  }
-  t = toc(&tv);
-  if (flag_verbose) {
-    cout << "n = " << n << "   t = " << t << endl;
-    cout << "r = " << c << endl;
-    cout << n << " operations in " << t << " s." << endl;
-  } else {
-    cout << "   sin: ";
-  }
-
-  print_timing(n, t);
-}
-
-template <class T>
-void TestSuite<T>::test6() {
-  if (flag_verbose) {
-    cout << endl;
-    cout << "Timing log ..." << endl;
-  }
-
-  //int n = 1000, i;
-  int n = 1000000, i;
-  tictoc tv;
-  double t;
-  n *= long_factor;
-
-  T a = 0.0;
-  T c = exp(T(-50.1));
-  T d = exp(T(100.2) / double(n));
-
-  tic(&tv);
-  for (i = 0; i < n; i++) {
-    a = a + log(c);
-    c *= d;
-  }
-  t = toc(&tv);
-  if (flag_verbose) {
-    cout << "n = " << n << "   t = " << t << endl;
-    cout << "a = " << a << endl;
-    cout << n << " operations in " << t << " s." << endl;
-  } else {
-    cout << "   log: ";
-  }
-
-  print_timing(n, t);
-}
 
 template <class T>
 void TestSuite<T>::test7() {
@@ -294,7 +223,7 @@ void TestSuite<T>::test7() {
   }
 
   //int n = 100000, i;
-  int n = 100000000, i;
+  int n = 1000000000 * factor(), i;
   tictoc tv;
   double t;
   n *= long_factor;
@@ -321,79 +250,39 @@ void TestSuite<T>::test7() {
     cout << "n = " << n << "   t = " << t << endl;
     cout << "r = " << x1+x2+x3+x4 << endl;
     cout << 8*n << " operations in " << t << " s." << endl;
-  } else {
-    cout << "   dot: ";
   }
 
-  print_timing(8.0*n, t);
+  print_timing(8.0*n, t, "dot");
 }
+template<class F, class T>
+void test(F f, T const &low, T const &hig, double n, char const * name)
+{
+    if (flag_verbose) {
+        cout << endl;
+        cout << "Timing " << name << " ..." << endl;
+    }
 
-template <class T>
-void TestSuite<T>::test8() {
-  if (flag_verbose) {
-    cout << endl;
-    cout << "Timing exp ..." << endl;
-  }
+    tictoc tv;
 
-  //int n = 1000, i;
-  int n = 1000000, i;
-  tictoc tv;
-  double t;
-  n *= long_factor;
+    T a = 0.0;
+    T c = low;
+    T d = (hig - low) / static_cast<double>(n);
 
-  T a = 0.0;
-  T c = -5.0;
-  T d = 10.0 / static_cast<double>(n);
+    double t;
+    tic(&tv);
+    for (uint64_t i = 0; i < uint64_t(n); i++) {
+        a = a + f(c);
+        c += d;
+    }
 
-  tic(&tv);
-  for (i = 0; i < n; i++) {
-    a = a + exp(c);
-    c += d;
-  }
-  t = toc(&tv);
-  if (flag_verbose) {
-    cout << "n = " << n << "   t = " << t << endl;
-    cout << "a = " << a << endl;
-    cout << n << " operations in " << t << " s." << endl;
-  } else {
-    cout << "   exp: ";
-  }
+    t = toc(&tv);
+    if (flag_verbose) {
+        cout << "n = " << n << "   t = " << t << endl;
+        cout << "a = " << a << endl;
+        cout << n << " operations in " << t << " s." << endl;
+    }
 
-  print_timing(n, t);
-}
-
-template <class T>
-void TestSuite<T>::test9() {
-  if (flag_verbose) {
-    cout << endl;
-    cout << "Timing cos ..." << endl;
-  }
-
-  //int n = 4000, i;
-  int n = 4000000, i;
-  tictoc tv;
-  double t;
-  n *= long_factor;
-
-  T a = 0.0;
-  T b = 3.0 * pi() / static_cast<double>(n);
-  T c = 0.0;
-
-  tic(&tv);
-  for (i = 0; i < n; i++) {
-    a += b;
-    c += cos(a);
-  }
-  t = toc(&tv);
-  if (flag_verbose) {
-    cout << "n = " << n << "   t = " << t << endl;
-    cout << "r = " << c << endl;
-    cout << n << " operations in " << t << " s." << endl;
-  } else {
-    cout << "   cos: ";
-  }
-
-  print_timing(n, t);
+    print_timing(n, t, name);
 }
 
 template <class T>
@@ -402,11 +291,35 @@ void TestSuite<T>::testall() {
   test2();
   test3();
   test4();
-  test5();
-  test6();
   test7();
-  test8();
-  test9();
+
+  double n = 1E8 * factor() * long_factor;
+
+  test([](T const& a) ->T { return round(a);  }, T(-5.), T(5.), n, "round");
+  test([](T const& a) ->T { return ceil(a);  }, T(-5.), T(5.), n, "ceil");
+  test([](T const& a) ->T { return floor(a);  }, T(-5.), T(5.), n, "floor");
+
+
+  test([](T const& a) ->T { return sin(a);  }, T(-5.), T(5.), n, "sin");
+  test([](T const& a) ->T { return cos(a);  }, T(-5.), T(5.), n, "cos");
+  test([](T const& a) ->T { return tan(a);  }, T(-5.), T(5.), n, "tan");
+  
+  test([](T const& a) ->T { return asin(a);  }, T(-1.), T(1.), n, "asin");
+  test([](T const& a) ->T { return acos(a);  }, T(-1.), T(1.), n, "acos");
+  test([](T const& a) ->T { return atan(a);  }, T(-5.), T(5.), n, "atan");
+  
+  test([](T const& a) ->T { return exp(a);  }, T(-5.), T(5.), n, "exp");
+
+  test([](T const& a) ->T { return log(a);  }, T(0.1), T(5.), n, "log");
+  test([](T const& a) ->T { return log10(a);  }, T(0.1), T(5.), n, "log10");
+
+  test([](T const& a) ->T { return sinh(a);  }, T(-5.), T(5.), n, "sinh");
+  test([](T const& a) ->T { return sinh(a);  }, T(-0.05), T(0.05), n, "sinh[-0.05,0.05]");
+  test([](T const& a) ->T { return cosh(a);  }, T(-5.), T(5.), n, "cosh");
+  test([](T const& a) ->T { return tanh(a);  }, T(-5.), T(5.), n, "tanh");
+  test([](T const& a) ->T { return asinh(a);  }, T(-5.), T(5.), n, "asinh");
+  test([](T const& a) ->T { return acosh(a);  }, T(1), T(5.), n, "acosh");
+  test([](T const& a) ->T { return atanh(a);  }, T(-1), T(1.), n, "atanh");
 }
 
 void print_usage() {

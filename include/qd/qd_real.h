@@ -169,7 +169,7 @@ QD_API qd_real polyroot(const qd_real *c, int n,
     const qd_real &x0, int max_iter = 64, double thresh = 0.0);
 
 QD_API qd_real qdrand(void);
-QD_API qd_real sqrt(const qd_real &a);
+QD_CONSTEXPR qd_real sqrt(const qd_real &a);
 
 /* Computes  qd * d  where d is known to be a power of 2.
    This can be done component wise.                      */
@@ -200,16 +200,16 @@ QD_API QD_CONSTEXPR qd_real operator/(const qd_real &a, double b);
 QD_API QD_CONSTEXPR qd_real operator/(double a, const qd_real &b);
 
 QD_API QD_CONSTEXPR qd_real sqr(const qd_real &a);
-QD_API qd_real sqrt(const qd_real &a);
-QD_API qd_real pow(const qd_real &a, int n);
-QD_API qd_real pow(const qd_real &a, const qd_real &b);
-QD_API qd_real npwr(const qd_real &a, int n);
+QD_CONSTEXPR qd_real sqrt(const qd_real &a);
+QD_CONSTEXPR qd_real pow(const qd_real &a, int n);
+QD_CONSTEXPR qd_real pow(const qd_real &a, const qd_real &b);
+QD_CONSTEXPR qd_real npwr(const qd_real &a, int n);
 
-QD_API qd_real nroot(const qd_real &a, int n);
+qd_real nroot(const qd_real &a, int n);
 
-QD_API qd_real rem(const qd_real &a, const qd_real &b);
-QD_API qd_real drem(const qd_real &a, const qd_real &b);
-QD_API qd_real divrem(const qd_real &a, const qd_real &b, qd_real &r);
+QD_CONSTEXPR qd_real rem(const qd_real &a, const qd_real &b);
+QD_CONSTEXPR qd_real drem(const qd_real &a, const qd_real &b);
+QD_CONSTEXPR qd_real divrem(const qd_real &a, const qd_real &b, qd_real &r);
 
 QD_CONSTEXPR dd_real to_dd_real(const qd_real &a);
 QD_CONSTEXPR double  to_double(const qd_real &a);
@@ -251,39 +251,40 @@ QD_API QD_CONSTEXPR bool operator!=(const dd_real &a, const qd_real &b);
 QD_API QD_CONSTEXPR bool operator!=(double a, const qd_real &b);
 QD_API QD_CONSTEXPR bool operator!=(const qd_real &a, double b);
 
-QD_API QD_CONSTEXPR qd_real fabs(const qd_real &a);
-QD_API QD_CONSTEXPR qd_real abs(const qd_real &a);    /* same as fabs */
+QD_CONSTEXPR qd_real fabs(const qd_real &a);
+QD_CONSTEXPR qd_real abs(const qd_real &a);    /* same as fabs */
 
-QD_API qd_real ldexp(const qd_real &a, int n);
+QD_CONSTEXPR qd_real ldexp(const qd_real &a, int n);
 
-QD_API QD_CONSTEXPR qd_real nint(const qd_real &a);
+QD_CONSTEXPR qd_real nint(const qd_real& a);
+QD_CONSTEXPR qd_real round(const qd_real& a);
 QD_API QD_CONSTEXPR qd_real quick_nint(const qd_real &a);
 QD_API qd_real floor(const qd_real &a);
 QD_API qd_real ceil(const qd_real &a);
 QD_API QD_CONSTEXPR qd_real aint(const qd_real &a);
 
-QD_API qd_real sin(const qd_real &a);
-QD_API qd_real cos(const qd_real &a);
-QD_API qd_real tan(const qd_real &a);
-QD_API void sincos(const qd_real &a, qd_real &s, qd_real &c);
+QD_CONSTEXPR qd_real sin(const qd_real &a);
+QD_CONSTEXPR qd_real cos(const qd_real &a);
+QD_CONSTEXPR qd_real tan(const qd_real &a);
+QD_CONSTEXPR void sincos(const qd_real &a, qd_real &s, qd_real &c);
 
-QD_API qd_real asin(const qd_real &a);
-QD_API qd_real acos(const qd_real &a);
-QD_API qd_real atan(const qd_real &a);
-QD_API qd_real atan2(const qd_real &y, const qd_real &x);
+QD_CONSTEXPR qd_real asin(const qd_real &a);
+QD_CONSTEXPR qd_real acos(const qd_real &a);
+QD_CONSTEXPR qd_real atan(const qd_real &a);
+QD_CONSTEXPR qd_real atan2(const qd_real &y, const qd_real &x);
 
-QD_API qd_real exp(const qd_real &a);
-QD_API qd_real log(const qd_real &a);
-QD_API qd_real log10(const qd_real &a);
+QD_CONSTEXPR qd_real exp(const qd_real &a);
+QD_CONSTEXPR qd_real log(const qd_real &a);
+QD_CONSTEXPR qd_real log10(const qd_real &a);
 
-QD_API qd_real sinh(const qd_real &a);
-QD_API qd_real cosh(const qd_real &a);
-QD_API qd_real tanh(const qd_real &a);
-QD_API void sincosh(const qd_real &a, qd_real &sin_qd, qd_real &cos_qd);
+QD_CONSTEXPR qd_real sinh(const qd_real &a);
+QD_CONSTEXPR qd_real cosh(const qd_real &a);
+QD_CONSTEXPR qd_real tanh(const qd_real &a);
+QD_CONSTEXPR void sincosh(const qd_real &a, qd_real &sin_qd, qd_real &cos_qd);
 
-QD_API qd_real asinh(const qd_real &a);
-QD_API qd_real acosh(const qd_real &a);
-QD_API qd_real atanh(const qd_real &a);
+QD_CONSTEXPR qd_real asinh(const qd_real &a);
+QD_CONSTEXPR qd_real acosh(const qd_real &a);
+QD_CONSTEXPR qd_real atanh(const qd_real &a);
 
 QD_API qd_real qdrand(void);
 
@@ -292,7 +293,7 @@ QD_CONSTEXPR qd_real (max)(const qd_real &a, const qd_real &b, const qd_real &c)
 QD_CONSTEXPR qd_real (min)(const qd_real &a, const qd_real &b);
 QD_CONSTEXPR qd_real (min)(const qd_real &a, const qd_real &b, const qd_real &c);
 
-QD_API qd_real fmod(const qd_real &a, const qd_real &b);
+QD_CONSTEXPR qd_real fmod(const qd_real &a, const qd_real &b);
 
 QD_API std::ostream &operator<<(std::ostream &s, const qd_real &a);
 QD_API std::istream &operator>>(std::istream &s, qd_real &a);

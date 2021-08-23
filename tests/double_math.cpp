@@ -334,6 +334,9 @@ void test_ldexp()
 	static_assert(fb::ldexp_(1.5, 1) == 3.);
 	QdAssert(fb::ldexp_(1.5, 1) == 3.);
 
+	static_assert(fb::ldexp_(1, EXP_MAX) == 8.988465674311579538646525953945E307);
+	QdAssert(fb::ldexp_(1, EXP_MAX) == 8.988465674311579538646525953945E307);
+
 	
 	double const test = 2 * _d_one_prev;
 	QdAssert(std::ldexp(std::ldexp(test, EXP_NORMAL_MIN), -EXP_NORMAL_MIN) == test);
