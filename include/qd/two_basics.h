@@ -99,7 +99,7 @@ namespace qd {
 
 
     /*********** Basic Functions ************/
-    /* Computes fl(a+b) and err(a+b).  Assumes |a| >= |b|. */
+    /* Computes fl(a+b) and err(a+b).  Assumes |a| >= |b|. or |a||b| = 0. */
     inline QD_CONSTEXPR double quick_two_sum(double a, double b, double& err)
     {
         TWO_CHECK();
@@ -108,7 +108,7 @@ namespace qd {
         return s;
     }
 
-    /* Computes fl(a-b) and err(a-b).  Assumes |a| >= |b| */
+    /* Computes fl(a-b) and err(a-b).  Assumes |a| >= |b| or |a||b| = 0. */
     inline QD_CONSTEXPR double quick_two_diff(double a, double b, double& err)
     {
         TWO_CHECK();
