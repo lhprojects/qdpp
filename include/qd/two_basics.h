@@ -20,12 +20,13 @@
 
 #include <cmath>
 #include <limits>
+#include <type_traits>
 #include "qd_config.h"
 
 namespace qd {
 
-inline QD_CONSTEXPR const double _d_nan = std::numeric_limits<double>::quiet_NaN();
-inline QD_CONSTEXPR const double _d_inf = std::numeric_limits<double>::infinity();
+    inline QD_CONSTEXPR const double _d_nan = std::numeric_limits<double>::quiet_NaN();
+    inline QD_CONSTEXPR const double _d_inf = std::numeric_limits<double>::infinity();
 
 
 #ifdef __GNUC__
@@ -51,93 +52,158 @@ inline QD_CONSTEXPR const double _d_inf = std::numeric_limits<double>::infinity(
 #define TWO_CHECK() do {} while(false)
 #endif
 
-/*********** Basic Functions ************/
-/* Computes fl(a+b) and err(a+b).  Assumes |a| >= |b|. */
-inline QD_CONSTEXPR double quick_two_sum(double a, double b, double &err) {
-  TWO_CHECK();
-  double s = a + b;
-  err = b - (s - a);
-  return s;
-}
 
-/* Computes fl(a-b) and err(a-b).  Assumes |a| >= |b| */
-inline QD_CONSTEXPR double quick_two_diff(double a, double b, double &err) {
-    TWO_CHECK();
-    double s = a - b;
-  err = (a - s) - b;
-  return s;
-}
+#ifdef _MSC_VER
 
-/* Computes fl(a+b) and err(a+b).  */
-inline QD_CONSTEXPR double two_sum(double a, double b, double &err) {
-    TWO_CHECK();
-    double s = a + b;
-  double bb = s - a;
-  err = (a - (s - bb)) + (b - bb);
-  return s;
-}
+#include <immintrin.h>
 
-/* Computes fl(a-b) and err(a-b).  */
-inline QD_CONSTEXPR double two_diff(double a, double b, double &err) {
-    TWO_CHECK();
-    double s = a - b;
-  double bb = s - a;
-  err = (a - (s - bb)) - (b + bb);
-  return s;
-}
+    inline double QD_FMA_NOCHECK(double a, double b, double c)
+    {
+        __m128d aw;
+        aw.m128d_f64[0] = a;
+        aw.m128d_f64[1] = 0;
+        __m128d bw;
+        bw.m128d_f64[0] = b;
+        bw.m128d_f64[1] = 0;
+        __m128d cw;
+        cw.m128d_f64[0] = c;
+        cw.m128d_f64[1] = 0;
+        __m128d answ = _mm_fmadd_sd(aw, bw, cw);
+        return answ.m128d_f64[0];
+    }
+
+    inline double QD_FMS_NOCHECK(double a, double b, double c)
+    {
+        __m128d aw;
+        aw.m128d_f64[0] = a;
+        aw.m128d_f64[1] = 0;
+        __m128d bw;
+        bw.m128d_f64[0] = b;
+        bw.m128d_f64[1] = 0;
+        __m128d cw;
+        cw.m128d_f64[0] = c;
+        cw.m128d_f64[1] = 0;
+        __m128d answ = _mm_fmsub_sd(aw, bw, cw);
+        return answ.m128d_f64[0];
+    }
+
+#ifndef QD_FMA
+#define QD_FMA QD_FMA_NOCHECK
+#endif
 
 #ifndef QD_FMS
-/* Computes high word and lo word of a */
-inline QD_CONSTEXPR  void split(double a, double &hi, double &lo) {
-  double temp;
-  if (a > _QD_SPLIT_THRESH || a < -_QD_SPLIT_THRESH) {
-    a *= 3.7252902984619140625e-09;  // 2^-28
-    temp = _QD_SPLITTER * a;
-    hi = temp - (temp - a);
-    lo = a - hi;
-    hi *= 268435456.0;          // 2^28
-    lo *= 268435456.0;          // 2^28
-  } else {
-    temp = _QD_SPLITTER * a;
-    hi = temp - (temp - a);
-    lo = a - hi;
-  }
-}
+#define QD_FMS QD_FMS_NOCHECK
 #endif
 
-/* Computes fl(a*b) and err(a*b). */
-inline QD_CONSTEXPR double two_prod(double a, double b, double &err) {
+#endif
+
+
+    /*********** Basic Functions ************/
+    /* Computes fl(a+b) and err(a+b).  Assumes |a| >= |b|. */
+    inline QD_CONSTEXPR double quick_two_sum(double a, double b, double& err)
+    {
+        TWO_CHECK();
+        double s = a + b;
+        err = b - (s - a);
+        return s;
+    }
+
+    /* Computes fl(a-b) and err(a-b).  Assumes |a| >= |b| */
+    inline QD_CONSTEXPR double quick_two_diff(double a, double b, double& err)
+    {
+        TWO_CHECK();
+        double s = a - b;
+        err = (a - s) - b;
+        return s;
+    }
+
+    /* Computes fl(a+b) and err(a+b).  */
+    inline QD_CONSTEXPR double two_sum(double a, double b, double& err)
+    {
+        TWO_CHECK();
+        double s = a + b;
+        double bb = s - a;
+        err = (a - (s - bb)) + (b - bb);
+        return s;
+    }
+
+    /* Computes fl(a-b) and err(a-b).  */
+    inline QD_CONSTEXPR double two_diff(double a, double b, double& err)
+    {
+        TWO_CHECK();
+        double s = a - b;
+        double bb = s - a;
+        err = (a - (s - bb)) - (b + bb);
+        return s;
+    }
+
+    /* Computes high word and lo word of a */
+    inline QD_CONSTEXPR  void split(double a, double& hi, double& lo)
+    {
+        double temp;
+        if (a > _QD_SPLIT_THRESH || a < -_QD_SPLIT_THRESH) {
+            a *= 3.7252902984619140625e-09;  // 2^-28
+            temp = _QD_SPLITTER * a;
+            hi = temp - (temp - a);
+            lo = a - hi;
+            hi *= 268435456.0;          // 2^28
+            lo *= 268435456.0;          // 2^28
+        } else {
+            temp = _QD_SPLITTER * a;
+            hi = temp - (temp - a);
+            lo = a - hi;
+        }
+    }
+
+    /* Computes fl(a*b) and err(a*b). */
+    inline QD_CONSTEXPR double two_prod(double a, double b, double& err)
+    {
+        TWO_CHECK();
+
 #ifdef QD_FMS
-  double p = a * b;
-  err = QD_FMS(a, b, p);
-  return p;
+        bool const has_fms = true;
 #else
-    TWO_CHECK();
-    double a_hi, a_lo, b_hi, b_lo;
-  double p = a * b;
-  split(a, a_hi, a_lo);
-  split(b, b_hi, b_lo);
-  err = ((a_hi * b_hi - p) + a_hi * b_lo + a_lo * b_hi) + a_lo * b_lo;
-  return p;
+        bool const has_fms = false;
 #endif
-}
 
-/* Computes fl(a*a) and err(a*a).  Faster than the above method. */
-inline QD_CONSTEXPR double two_sqr(double a, double &err) {
+        if (!std::is_constant_evaluated() && has_fms) {
+            double p = a * b;
+            err = QD_FMS(a, b, p);
+            return p;
+        } else {
+            double a_hi, a_lo, b_hi, b_lo;
+            double p = a * b;
+            split(a, a_hi, a_lo);
+            split(b, b_hi, b_lo);
+            err = ((a_hi * b_hi - p) + a_hi * b_lo + a_lo * b_hi) + a_lo * b_lo;
+            return p;
+        }
+    }
+
+    /* Computes fl(a*a) and err(a*a).  Faster than the above method. */
+    inline QD_CONSTEXPR double two_sqr(double a, double& err)
+    {
+        TWO_CHECK();
+
 #ifdef QD_FMS
-  double p = a * a;
-  err = QD_FMS(a, a, p);
-  return p;
+        bool const has_fms = true;
 #else
-    TWO_CHECK();
-    double hi, lo;
-  double q = a * a;
-  split(a, hi, lo);
-  err = ((hi * hi - q) + 2.0 * hi * lo) + lo * lo;
-  return q;
+        bool const has_fms = false;
 #endif
-}
 
+        if (!std::is_constant_evaluated() && has_fms) {
+            double p = a * a;
+            err = QD_FMS(a, a, p);
+            return p;
+        } else {
+            double hi, lo;
+            double q = a * a;
+            split(a, hi, lo);
+            err = ((hi * hi - q) + 2.0 * hi * lo) + lo * lo;
+            return q;
+        }
+
+    }
 }
 
 #endif /* _QD_INLINE_H */

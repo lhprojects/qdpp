@@ -19,6 +19,7 @@
 #include "double_basics.h"
 #include "util.h"
 
+
 QD_CONSTEXPR bool dd_real::isnan() const { return QD_ISNAN(x[0]) || QD_ISNAN(x[1]); }
 QD_CONSTEXPR bool dd_real::isfinite() const { return QD_ISFINITE(x[0]); }
 QD_CONSTEXPR bool dd_real::isinf() const { return QD_ISINF(x[0]); }
