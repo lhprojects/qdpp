@@ -2594,8 +2594,10 @@ inline qd_real polyroot(const qd_real *c, int n,
 }
 
 inline qd_real qd_real::debug_rand() {
-  if (std::rand() % 2 == 0)
-    return qdrand();
+    if (std::rand() % 2 == 0) {
+        qd_std_rand_generator gen;
+        return qdrand(gen);
+    }
 
   int expn = 0;
   qd_real a = 0.0;

@@ -116,8 +116,6 @@ struct dd_real {
   QD_CONSTEXPR bool is_positive() const;
   QD_CONSTEXPR bool is_negative() const;
 
-  static dd_real rand(void);
-
   void to_digits(char *s, int &expn, int precision = _ndigits) const;
   void write(char *s, int len, int precision = _ndigits, 
       bool showpos = false, bool uppercase = false) const;

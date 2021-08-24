@@ -1153,6 +1153,25 @@ inline QD_CONSTEXPR dd_real polyroot(const dd_real *c, int n,
   return x;
 }
 
+struct qd_std_rand_generator {
+    using result_type = uint32_t;
+
+    static QD_CONSTEXPR result_type max()
+    {
+        return RAND_MAX;
+    }
+
+    static QD_CONSTEXPR result_type min()
+    {
+        return 0;
+    }
+
+    result_type operator()() const
+    {
+        return std::rand();
+    }
+};
+
 #if 0
 /* Constructor.  Reads a double-double number from the string s
    and constructs a double-double number.                         */
@@ -1173,11 +1192,16 @@ dd_real &dd_real::operator=(const char *s) {
 
 
 
+
+#endif
+
 inline dd_real dd_real::debug_rand()
 {
 
-    if (std::rand() % 2 == 0)
-        return ddrand();
+    if (std::rand() % 2 == 0) {
+        qd_std_rand_generator gen;
+        return ddrand(gen);
+    }
 
     int expn = 0;
     dd_real a = 0.0;
@@ -1189,8 +1213,5 @@ inline dd_real dd_real::debug_rand()
     }
     return a;
 }
-
-#endif
-
 #endif
 

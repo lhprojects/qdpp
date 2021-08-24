@@ -1024,11 +1024,6 @@ inline QD_CONSTEXPR qd_real (min)(const qd_real &a, const qd_real &b,
   return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
 }
 
-/* Random number generator */
-inline qd_real qd_real::rand() {
-  return qdrand();
-}
-
 inline QD_CONSTEXPR qd_real ldexp(const qd_real &a, int n) {
   return qd_real(fb::ldexp(a[0], n), fb::ldexp(a[1], n), 
                  fb::ldexp(a[2], n), fb::ldexp(a[3], n));

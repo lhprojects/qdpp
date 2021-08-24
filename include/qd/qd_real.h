@@ -124,8 +124,6 @@ struct QD_API qd_real {
   QD_CONSTEXPR bool is_positive() const;
   QD_CONSTEXPR bool is_negative() const;
 
-  static qd_real rand(void);
-
   void to_digits(char *s, int &expn, int precision = _ndigits) const;
   void write(char *s, int len, int precision = _ndigits, 
       bool showpos = false, bool uppercase = false) const;
@@ -277,8 +275,6 @@ QD_CONSTEXPR void sincosh(const qd_real &a, qd_real &sin_qd, qd_real &cos_qd);
 QD_CONSTEXPR qd_real asinh(const qd_real &a);
 QD_CONSTEXPR qd_real acosh(const qd_real &a);
 QD_CONSTEXPR qd_real atanh(const qd_real &a);
-
-qd_real qdrand(void);
 
 QD_CONSTEXPR qd_real (max)(const qd_real &a, const qd_real &b);
 QD_CONSTEXPR qd_real (max)(const qd_real &a, const qd_real &b, const qd_real &c);
