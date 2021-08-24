@@ -526,16 +526,13 @@ namespace qd {
         TWO_CHECK();
 
 #ifdef QD_FMS
-        bool const has_fms = true;
-#else
-        bool const has_fms = false;
-#endif
-
-        if (!std::is_constant_evaluated() && has_fms) {
+        if (!std::is_constant_evaluated()) {
             double p = a * b;
             err = QD_FMS(a, b, p);
             return p;
-        } else {
+        } else
+#endif
+        {
             double a_hi, a_lo, b_hi, b_lo;
             double p = a * b;
             split(a, a_hi, a_lo);
@@ -551,16 +548,13 @@ namespace qd {
         TWO_CHECK();
 
 #ifdef QD_FMS
-        bool const has_fms = true;
-#else
-        bool const has_fms = false;
-#endif
-
-        if (!std::is_constant_evaluated() && has_fms) {
+        if (!std::is_constant_evaluated()) {
             double p = a * a;
             err = QD_FMS(a, a, p);
             return p;
-        } else {
+        } else
+#endif
+        {
             double hi, lo;
             double q = a * a;
             split(a, hi, lo);
