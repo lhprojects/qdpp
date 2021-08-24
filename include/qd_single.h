@@ -3494,6 +3494,15 @@ namespace fb {
         return expx;
     }
 
+    inline constexpr double exp(double a) noexcept
+    {
+        if (std::is_constant_evaluated()) {
+            return exp_(a);
+        } else {
+            return std::exp(a);
+        }
+    }
+
     inline constexpr double exp2_(double a) noexcept
     {
         if (a == 0.) return 1;
