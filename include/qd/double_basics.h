@@ -889,9 +889,9 @@ namespace fb {
                 }
 
                 if (dividend_ > 0.5 * divisor_) {
-                    // dividend -> £¨divisor/2, divisor)
+                    // dividend -> (divisor/2, divisor)
                     dividend_ -= divisor_;
-                    // dividend -> £¨-divisor/2, 0)
+                    // dividend -> (-divisor/2, 0)
                 } else if (dividend_ < 0.5 * divisor_) {
                     // dividend -> [0, divisor/2)
                 } else if (dividend_ == 0.5 * divisor_) {
