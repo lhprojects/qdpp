@@ -44,6 +44,7 @@ struct QD_API qd_real {
   void quick_prod_accum(double a, double b, double &e);
 
   QD_CONSTEXPR qd_real(double x0, double x1, double x2, double x3);
+
   explicit qd_real(const double *xx);
 
   static const qd_real _2pi;
@@ -67,7 +68,7 @@ struct QD_API qd_real {
 #if 0
   qd_real(const char *s);
 #endif
-  explicit QD_CONSTEXPR qd_real(const dd_real &dd);
+  QD_CONSTEXPR qd_real(const dd_real& dd);
   QD_CONSTEXPR qd_real(double d);
   QD_CONSTEXPR qd_real(int i);
 
@@ -149,19 +150,6 @@ struct QD_API qd_real {
 	  return dd_real(x[0],x[1]);
   }
 };
-
-namespace std {
-  template <>
-  class numeric_limits<qd_real> : public numeric_limits<double> {
-  public:
-    static QD_CONSTEXPR double epsilon() { return qd_real::_eps; }
-    static QD_CONSTEXPR double (min)() { return qd_real::_min_normalized; }
-    static QD_CONSTEXPR qd_real (max)() { return qd_real::_max; }
-    static QD_CONSTEXPR qd_real safe_max() { return qd_real::_safe_max; }
-    static const int digits = 209;
-    static const int digits10 = 62;
-  };
-}
 
 
 QD_API qd_real polyeval(const qd_real *c, int n, const qd_real &x);
@@ -301,6 +289,20 @@ QD_API std::istream &operator>>(std::istream &s, qd_real &a);
 #include "qd_inline.h"
 #include "qd_const.inl.h"
 #include "qd_real.inl.h"
+
+// put limits at the tail to resolve dependecy
+namespace std {
+    template <>
+    class numeric_limits<qd_real> : public numeric_limits<double> {
+    public:
+        static QD_CONSTEXPR double epsilon() { return qd_real::_eps; }
+        static QD_CONSTEXPR double (min)() { return qd_real::_min_normalized; }
+        static QD_CONSTEXPR qd_real(max)() { return qd_real::_max; }
+        static QD_CONSTEXPR qd_real safe_max() { return qd_real::_safe_max; }
+        static const int digits = 209;
+        static const int digits10 = 62;
+    };
+}
 
 #endif /* _QD_QD_REAL_H */
 
