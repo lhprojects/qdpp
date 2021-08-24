@@ -4740,7 +4740,7 @@ inline constexpr dd_real ceil(const dd_real& a)
 
     if (hi == a.x[0]) {
         /* High word is integer already.  Round the low word. */
-        lo = std::ceil(a.x[1]);
+        lo = fb::ceil(a.x[1]);
         hi = qd::quick_two_sum(hi, lo, lo);
     }
 

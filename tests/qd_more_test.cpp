@@ -462,7 +462,8 @@ void foo()
 
 void test_constexpr()
 {
-    QD_CONSTEXPR dd_real sqrt1 = sqrt(dd_real(1.));
+	QD_CONSTEXPR dd_real ceil1 = ceil(dd_real(1.));
+	QD_CONSTEXPR dd_real sqrt1 = sqrt(dd_real(1.));
 
     QD_CONSTEXPR dd_real sin1 = sin(dd_real(1.));
     QD_CONSTEXPR dd_real cos1 = cos(dd_real(1.));
