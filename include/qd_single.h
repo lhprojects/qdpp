@@ -3810,6 +3810,7 @@ namespace fb {
 #endif
 #include <vector>
 #include <random>
+#include <type_traits>
 
 dd_real ddrand(void);
 constexpr dd_real sqrt(const dd_real& a);
@@ -4752,32 +4753,113 @@ inline constexpr dd_real aint(const dd_real& a)
     return (a.x[0] >= 0.0) ? floor(a) : ceil(a);
 }
 
-/* Random number generator */
-inline dd_real dd_real::rand()
+template<class T>
+inline QD_CONSTEXPR int qd_get_bits(T max_)
 {
-    return ddrand();
+    int bits = 0;
+    for (T m = max_; m;) {
+        bits += 1;
+        m >>= 1;
+    }
+    if (!((max_ + 1) & max_)) {
+        bits += 1;
+    }
+    bits -= 1;
+    return bits;
 }
 
+#ifdef QD_HAS_CONSTEXPR
+static_assert(qd_get_bits(1) == 1);
+static_assert(qd_get_bits(2) == 1);
+static_assert(qd_get_bits(uint32_t(-1)) == 32);
+static_assert(qd_get_bits(uint64_t(-1)) == 64);
+static_assert(qd_get_bits(uint64_t(uint32_t(-1))) == 32);
+static_assert(qd_get_bits(uint64_t(1) << 53) == 53);
+#endif
 
-inline std::mt19937 mt19937;
-inline dd_real ddrand() {
-  static const double m_const = 4.6566128730773926e-10;  /* = 2^{-31} */
-  double m = m_const;
-  dd_real r = 0.0;
-  double d;
+/* generate uniform double in [0,1) */
+template<class Gen>
+inline double drand(Gen& gen)
+{
+    using result_type = typename Gen::result_type;
+    const result_type max_ = (Gen::max)() - (Gen::min)();
+    QD_CONSTEXPR int bits = qd_get_bits(max_);
+    const result_type bits_mask = result_type(1) << (bits - 1);
+    const int n_gen_p_d = (53 + bits - 1) / bits;
+    const bool use_all_bits = !((max_ + 1) & max_);
+    uint64_t u1 = 0;
 
-  /* Strategy:  Generate 31 bits at a time, using lrand48 
-     random number generator.  Shift the bits, and reapeat
-     4 times. */
-  // lrand48()   not partable
-  // std::rand() too bad quality
+    // compiler unroll the loop
+    for (int i = 0; i < n_gen_p_d; ++i) {
+        if (bits != 64)
+            u1 <<= bits;
+        result_type g;
+        for (;;) {
+            g = gen() - (Gen::min)();
+            if (use_all_bits) {
+                break;
+            } else {
+                if (g > bits_mask) {
+                    if (i != 0) {
+                        // not need first time
+                        g &= bits_mask;
+                    }
+                    break;
+                }
+            }
 
-  for (int i = 0; i < 4; i++, m *= m_const) {
-    d = mt19937() * m;
-    r += d;
-  }
+        }
+        u1 |= g;
+    }
 
-  return r;
+    // exact 53 bits? don't belive it, mask anyway
+    const uint64_t df_mask = (uint64_t(1) << 53) - 1;
+    u1 &= df_mask;
+
+    double r1 = double(u1);
+    r1 *= 1.110223024625156540E-16; // 2^{-53}
+    return r1;
+
+
+}
+/* generate uniform double in [0,1), better quality */
+template<class Gen>
+inline double drand_fine(Gen& gen)
+{
+    const double base_f = 1.110223024625156540E-16;
+    double r = drand(gen);
+    if (r >= 0.5)
+        return r;
+    else {
+        if (r != 0.) {
+            double r2 = drand(gen) * base_f;
+            // 0 <= r2 < r < 0.5
+            double ra = r + r2;
+            return ra;
+        } else {
+            double base = base_f;
+            for (;;) {
+                r = drand(gen);
+                if (r != 0.) {
+                    break;
+                }
+                base *= base_f;
+            }
+            r *= base;
+            double r2 = drand(gen) * base * base_f;
+            double ra = r + r2;
+            return ra;
+        }
+    }
+}
+
+/* generate uniform dd_real in [0,1) */
+template<class Gen>
+inline dd_real ddrand(Gen &gen)
+{
+    double r1 = drand(gen);
+    double r2 = drand(gen) * 1.110223024625156540E-16;
+    return dd_real::add(r1, r2);
 }
 
 /* polyeval(c, n, x)
@@ -4794,6 +4876,21 @@ inline QD_CONSTEXPR dd_real polyeval(const dd_real *c, int n, const dd_real &x) 
 
   return r;
 }
+
+template<class T, class Gen>
+std::enable_if_t<std::is_same_v<T, double>, double>
+real_rand(Gen& gen)
+{
+    return drand(gen);
+}
+
+template<class T, class Gen>
+std::enable_if_t<std::is_same_v<T, dd_real>, dd_real>
+real_rand(Gen& gen)
+{
+    return ddrand(gen);
+}
+
 
 /* polyroot(c, n, x0)
    Given an n-th degree polynomial, finds a root close to 
@@ -5499,9 +5596,10 @@ struct QD_API qd_real {
       std::ios_base::fmtflags fmt = static_cast<std::ios_base::fmtflags>(0), 
       bool showpos = false, bool uppercase = false, char fill = ' ') const;
 
-  //HL:
-  operator dd_real() {
-	  if(this->isnan()) return dd_real::_nan;
+  QD_CONSTEXPR explicit operator dd_real() {
+      // we assume dd_real knows nothing about qd_real
+      // so we use operator here
+      if(this->isnan()) return dd_real::_nan;
 	  return dd_real(x[0],x[1]);
   }
 };
@@ -5511,7 +5609,10 @@ QD_API qd_real polyeval(const qd_real *c, int n, const qd_real &x);
 QD_API qd_real polyroot(const qd_real *c, int n, 
     const qd_real &x0, int max_iter = 64, double thresh = 0.0);
 
-QD_API qd_real qdrand(void);
+// generate uniform random number in [0,1]
+template<class Gen>
+qd_real qdrand(Gen&);
+
 QD_CONSTEXPR qd_real sqrt(const qd_real &a);
 
 /* Computes  qd * d  where d is known to be a power of 2.
@@ -9251,24 +9352,23 @@ inline QD_CONSTEXPR qd_real fmod(const qd_real &a, const qd_real &b) {
   return (a - b * n);
 }
 
-inline qd_real qdrand() {
-  static const double m_const = 4.6566128730773926e-10;  /* = 2^{-31} */
-  double m = m_const;
-  qd_real r = 0.0;
-  double d;
-
-  /* Strategy:  Generate 31 bits at a time, using lrand48 
-     random number generator.  Shift the bits, and repeat
-     7 times. */
-
-  for (int i = 0; i < 7; i++, m *= m_const) {
-    d = std::rand() * m;
-    r += d;
-  }
-
-  return r;
+template<class Gen>
+inline qd_real qdrand(Gen &gen) {
+    double const base_f = 1.110223024625156540E-16;
+    double r1 = drand(gen);
+    double r2 = drand(gen) * base_f;
+    double r3 = drand(gen) * (base_f * base_f);
+    double r4 = drand(gen) * (base_f * base_f * base_f);
+    qd::renorm(r1, r2, r3, r4);
+    return qd_real(r1, r2, r3, r4);
 }
 
+template<class T, class Gen>
+std::enable_if_t<std::is_same_v<T, qd_real>, qd_real>
+real_rand(Gen& gen)
+{
+    return qdrand(gen);
+}
 
 /* polyeval(c, n, x)
    Evaluates the given n-th degree polynomial at x.
