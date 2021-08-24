@@ -37,34 +37,16 @@ constinit double double_sqrt2_sqr = double_sqrt2_constexpr*double_sqrt2_constexp
 constinit double dd_sqrt2_sqr_to_double = to_double(dd_sqrt2_constexpr*dd_sqrt2_constexpr);
 constexpr double dd_sqr2_sqr_to_double_constexpr = to_double(dd_sqrt2_constexpr*dd_sqrt2_constexpr);
 
-# can't use constinit
+// can't use constinit
 double double_stdsqrt2 = sqrt(2);
 ```
 
-The data section is like
-
-```asm
-dd_sqrt2:
-        .quad   0x3ff6a09e667f3bcd              # double 1.4142135623730951
-        .quad   0xbc9bdd3413b26458              # double -9.6672933134529159E-17
-
-double_sqrt2:
-        .quad   0x3ff6a09e667f3bcd              # double 1.4142135623730951
-
-double_sqrt2_sqr:
-        .quad   0x4000000000000001              # double 2.0000000000000004
-
-dd_sqrt2_sqr_to_double:
-        .quad   0x4000000000000000              # double 2
-        
-double_stdsqrt2:
-        .quad   0x0000000000000000              # double 0
-```
+You can play with `qdpp` on godbolt https://godbolt.org/z/ojzjYr1oz .
 
 Note:
 
-* `fb:function_name` supports compiling time evaluation for `double`
-* `qdpp` supports compiling time evaluation for `dd_real`.
+* `fb:function_name` supports compiling time evaluation math functions for `double`
+* `qdpp` supports compiling time evaluation for `dd_real/qd_real`.
 * `double_stdsqrt2` will be initialized at the beginning of the execution.
 * It's more accuracy  to use `dd_real` as temporary variables.
 
