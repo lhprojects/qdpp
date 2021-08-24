@@ -971,7 +971,7 @@ inline QD_CONSTEXPR bool operator!=(const qd_real &a, const qd_real &b) {
 
 
 inline QD_CONSTEXPR qd_real aint(const qd_real &a) {
-  return (a[0] >= 0) ? floor(a) : ceil(a);
+  return (a.x[0] >= 0) ? floor(a) : ceil(a);
 }
 
 inline QD_CONSTEXPR bool qd_real::is_zero() const {
