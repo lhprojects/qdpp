@@ -1,6 +1,8 @@
-#include <qd/double_basics.h>
-#include <qd/double_math.h>
-#include <qd/dd.h>
+//#include <qd/double_basics.h>
+//#include <qd/double_math.h>
+//#include <qd/dd.h>
+#include <qd_single.h>
+
 int nerr = 0;
 int neps = 2;
 #define QdAssert(x) do {\

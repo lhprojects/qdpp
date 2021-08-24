@@ -300,7 +300,7 @@ QD_API std::istream &operator>>(std::istream &s, qd_real &a);
 
 #include "qd_inline.h"
 #include "qd_const.inl.h"
-#include <qd/qd_real.inl.h>
+#include "qd_real.inl.h"
 
 #endif /* _QD_QD_REAL_H */
 
