@@ -83,19 +83,19 @@ inline QD_CONSTEXPR qd_real round(const qd_real& a)
 }
 
 
-inline qd_real floor(const qd_real &a) {
+inline QD_CONSTEXPR qd_real floor(const qd_real &a) {
   double x0, x1, x2, x3;
   x1 = x2 = x3 = 0.0;
-  x0 = std::floor(a[0]);
+  x0 = fb::floor(a[0]);
 
   if (x0 == a[0]) {
-    x1 = std::floor(a[1]);
+    x1 = fb::floor(a[1]);
     
     if (x1 == a[1]) {
-      x2 = std::floor(a[2]);
+      x2 = fb::floor(a[2]);
 
       if (x2 == a[2]) {
-        x3 = std::floor(a[3]);
+        x3 = fb::floor(a[3]);
       }
     }
 
@@ -106,19 +106,19 @@ inline qd_real floor(const qd_real &a) {
   return qd_real(x0, x1, x2, x3);
 }
 
-inline qd_real ceil(const qd_real &a) {
+inline QD_CONSTEXPR qd_real ceil(const qd_real &a) {
   double x0, x1, x2, x3;
   x1 = x2 = x3 = 0.0;
-  x0 = std::ceil(a[0]);
+  x0 = fb::ceil(a[0]);
 
   if (x0 == a[0]) {
-    x1 = std::ceil(a[1]);
+    x1 = fb::ceil(a[1]);
     
     if (x1 == a[1]) {
-      x2 = std::ceil(a[2]);
+      x2 = fb::ceil(a[2]);
 
       if (x2 == a[2]) {
-        x3 = std::ceil(a[3]);
+        x3 = fb::ceil(a[3]);
       }
     }
 

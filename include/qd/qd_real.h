@@ -247,8 +247,8 @@ QD_CONSTEXPR qd_real ldexp(const qd_real &a, int n);
 QD_CONSTEXPR qd_real nint(const qd_real& a);
 QD_CONSTEXPR qd_real round(const qd_real& a);
 QD_API QD_CONSTEXPR qd_real quick_nint(const qd_real &a);
-QD_API qd_real floor(const qd_real &a);
-QD_API qd_real ceil(const qd_real &a);
+QD_API QD_CONSTEXPR qd_real floor(const qd_real &a);
+QD_API QD_CONSTEXPR qd_real ceil(const qd_real &a);
 QD_API QD_CONSTEXPR qd_real aint(const qd_real &a);
 
 QD_CONSTEXPR qd_real sin(const qd_real &a);
