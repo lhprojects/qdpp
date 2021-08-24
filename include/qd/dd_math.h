@@ -1006,8 +1006,10 @@ inline double drand(Gen& gen)
     const bool use_all_bits = !((max_ + 1) & max_);
     uint64_t u1 = 0;
 
+    // compiler unroll the loop
     for (int i = 0; i < n_gen_p_d; ++i) {
-        u1 <<= bits;
+        if (bits != 64)
+            u1 <<= bits;
         result_type g;
         for (;;) {
             g = gen() - (Gen::min)();
