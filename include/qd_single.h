@@ -333,8 +333,6 @@ struct dd_real {
   QD_CONSTEXPR bool is_positive() const;
   QD_CONSTEXPR bool is_negative() const;
 
-  static dd_real rand(void);
-
   void to_digits(char *s, int &expn, int precision = _ndigits) const;
   void write(char *s, int len, int precision = _ndigits, 
       bool showpos = false, bool uppercase = false) const;
@@ -1571,9 +1569,9 @@ namespace fb {
                 }
 
                 if (dividend_ > 0.5 * divisor_) {
-                    // dividend -> £¨divisor/2, divisor)
+                    // dividend -> (divisor/2, divisor)
                     dividend_ -= divisor_;
-                    // dividend -> £¨-divisor/2, 0)
+                    // dividend -> (-divisor/2, 0)
                 } else if (dividend_ < 0.5 * divisor_) {
                     // dividend -> [0, divisor/2)
                 } else if (dividend_ == 0.5 * divisor_) {
@@ -2953,7 +2951,7 @@ namespace fb {
 1,1,1,1,1,1,0,0,0,1,1,1,1,0,1,1,
         };
 
-        // calculate a * _2opi to [2 bits . 121 bits] is enough
+        // calculate a * _2opi to [2 bits . 121 bits] is enough for double
         // of course, for abs(a) >= pi/4, if a <= pi/4 deal with it specailly
         // see ARGUMENT REDUCTION FOR HUGE ARGUMENTS: Good to the Last Bit
 
@@ -2974,6 +2972,7 @@ namespace fb {
 
         for (int i_ = 0; i_ < 175 + B; ++i_) {
             int i = exp_ + 120 + B - i_;
+            static_assert(1023 + 120 + B < (int)sizeof(_2opi));
             bool bit = 0;
             if (i >= 0) {
                 bit = _2opi[i];
@@ -4936,6 +4935,25 @@ inline QD_CONSTEXPR dd_real polyroot(const dd_real *c, int n,
   return x;
 }
 
+struct qd_std_rand_generator {
+    using result_type = uint32_t;
+
+    static QD_CONSTEXPR result_type max()
+    {
+        return RAND_MAX;
+    }
+
+    static QD_CONSTEXPR result_type min()
+    {
+        return 0;
+    }
+
+    result_type operator()() const
+    {
+        return std::rand();
+    }
+};
+
 #if 0
 /* Constructor.  Reads a double-double number from the string s
    and constructs a double-double number.                         */
@@ -4956,11 +4974,16 @@ dd_real &dd_real::operator=(const char *s) {
 
 
 
+
+#endif
+
 inline dd_real dd_real::debug_rand()
 {
 
-    if (std::rand() % 2 == 0)
-        return ddrand();
+    if (std::rand() % 2 == 0) {
+        qd_std_rand_generator gen;
+        return ddrand(gen);
+    }
 
     int expn = 0;
     dd_real a = 0.0;
@@ -4972,9 +4995,6 @@ inline dd_real dd_real::debug_rand()
     }
     return a;
 }
-
-#endif
-
 #endif
 
 /*  dd_io.h  */
@@ -5576,8 +5596,6 @@ struct QD_API qd_real {
   QD_CONSTEXPR bool is_positive() const;
   QD_CONSTEXPR bool is_negative() const;
 
-  static qd_real rand(void);
-
   void to_digits(char *s, int &expn, int precision = _ndigits) const;
   void write(char *s, int len, int precision = _ndigits, 
       bool showpos = false, bool uppercase = false) const;
@@ -5729,8 +5747,6 @@ QD_CONSTEXPR void sincosh(const qd_real &a, qd_real &sin_qd, qd_real &cos_qd);
 QD_CONSTEXPR qd_real asinh(const qd_real &a);
 QD_CONSTEXPR qd_real acosh(const qd_real &a);
 QD_CONSTEXPR qd_real atanh(const qd_real &a);
-
-qd_real qdrand(void);
 
 QD_CONSTEXPR qd_real (max)(const qd_real &a, const qd_real &b);
 QD_CONSTEXPR qd_real (max)(const qd_real &a, const qd_real &b, const qd_real &c);
@@ -6765,11 +6781,6 @@ inline QD_CONSTEXPR qd_real (min)(const qd_real &a, const qd_real &b) {
 inline QD_CONSTEXPR qd_real (min)(const qd_real &a, const qd_real &b,
                    const qd_real &c) {
   return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
-}
-
-/* Random number generator */
-inline qd_real qd_real::rand() {
-  return qdrand();
 }
 
 inline QD_CONSTEXPR qd_real ldexp(const qd_real &a, int n) {
@@ -9430,8 +9441,10 @@ inline qd_real polyroot(const qd_real *c, int n,
 }
 
 inline qd_real qd_real::debug_rand() {
-  if (std::rand() % 2 == 0)
-    return qdrand();
+    if (std::rand() % 2 == 0) {
+        qd_std_rand_generator gen;
+        return qdrand(gen);
+    }
 
   int expn = 0;
   qd_real a = 0.0;

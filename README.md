@@ -2,28 +2,28 @@
 
 # What is this library?
 
-This library `qdpp` supports double-`double` (104bits) and quad-`double` (206bits) floating points.
+This library `qdpp` supports double-`double` (104bits) and quad-`double` (209bits) floating points.
 
-This is library  is based on the QD library.
+This library is a modification of  `QD` library. https://www.davidhbailey.com/dhbsoftware/
 
 # Why is this library?
 
-`qdpp` is based on the QD library. 
+`qdpp` is based on the `QD` library. 
 
 ## So why `QD`?
 
 `QD` supports double-`double` (104bits) and quad-`double` (206bits) floating points. The speed of double-`double` and quad-`double` are much faster than the normal multiple-precision library. Because
 
-* Dynamic memory allocation is not need. the memory is allocated on stack.
-* Easy to implement compiling time evaluation math functions.
+* Dynamic memory allocation is not needed. The memory for bits is allocated on stack.
+* Easy to implement compiling time evaluation math functions (`constexpr`). 
 
 ## `qdpp` compared to `QD`
 
-* Make the library header only for c++.
-* Add `constexpr`  to math functions for `dd_real` and `qd_real`.\
+* Make the library header-only for c++.
+* Add `constexpr`  to math functions for `dd_real` and `qd_real`.
 * Improvements for some math and IO functions.
-* `constexpr` math functions have been implemented for double.
-* This is library is not 100% compatible to the QD library.
+* `constexpr` math functions have been implemented for double too.
+* `qdpp` is not 100% compatible to the `QD` library.
 
 ## Compute constants in compiling time
 ```c++
@@ -41,47 +41,95 @@ constexpr double dd_sqr2_sqr_to_double_constexpr = to_double(dd_sqrt2_constexpr*
 double double_stdsqrt2 = sqrt(2);
 ```
 
-You can play with `qdpp` on godbolt https://godbolt.org/z/ojzjYr1oz .
+You can play with `qdpp` on godbolt  https://godbolt.org/z/nqrcs5Mfn.
 
 Note:
 
-* `fb:function_name` supports compiling time evaluation math functions for `double`
-* `qdpp` supports compiling time evaluation for `dd_real/qd_real`.
-* `double_stdsqrt2` will be initialized at the beginning of the execution.
-* It's more accuracy  to use `dd_real` as temporary variables.
+* ***Functions in namespace `fb` supports compiling time evaluation math functions for `double`***
+* ***`qdpp` supports compiling time evaluation for `dd_real/qd_real`.***
+* ***It's more accuracy  to use `dd_real` as temporary variables.***
 
 # Limitation
 
-* Fast math must be turn off for compiling.
-* Floating operation mode must be round-to-nearest
-* `qdpp` needs `std::bit_cast` or `__builtint_bit_cast`, thus you need very new compiler.
+* ***Fast math must be turn off for compiling.***
+* ***Floating operation mode must be round-to-nearest.***
 
-# Compiler supports
+# Compiler&Platform supports
 
-C++20 is need because the use of `std::bit_cast`.
+GCC & Clang & MSVC are OK to use.
 
-For Clang we use `__buildin_bit_cast` as a workaround.
+C++20 is needed because of the use of `std::bit_cast`. For Clang we use `__buildin_bit_cast` as a workaround.
+
+Both Windows and Linux (not tested) should be OK.
 
 # Build
 
 * `qdpp` is header only project for c++. 
-  * `#include <qd/dd.h>` for all stuff about `dd_real`.
-    * For only `dd_real` type definition and basic operations, include `#include <qd/dd_real.h>`.
-  * `#include <qd/qd.h>` for all stuff about `qd_real`.
-    * For only `qd_real` type definition and basic operations, include `#include <qd/qd_real.h>`.
+  
+  * All files of c++ parts have been ***clone*** into a single file, `<qd_single.h>`, you can include it for all functions. However, you can also include individual parts only.
+    * `#include <qd/double_math.h>` for all stuff about `double`.
+    * `#include <qd/dd.h>` for all stuff about `dd_real`.
+      * For only `dd_real` type definition and basic operations, include `#include <qd/dd_real.h>`.
+    * `#include <qd/dd_real.h>` for all stuff about `qd_real`. 
+  
+* If you want to use `qdpp` in C , the simplest way to do that include the source files`c_*.cpp` in your projects.
 
-* If you want to use `qdpp` in C , the simplest way to do that include the `c_*.cpp` in your projects.
+  ## Build tests (Cmake)
 
-  ## Build tests
+  ```bash
+  mkdir build
+  cd build
+  cmake -S ../tests
+  ```
 
-  `cmake -S ../tests`
+# Reference
 
-# So me notes on changes to `QD`
+(Sorry!  Far away to complete.)
+
+### Summary
+
+#### `double`
+
+Any function in namespace `fb` is implemented like this
+
+```c++
+double foo() noexcept {
+    if(std::is_constant_evaluated()) {
+        my_foo();
+    } else {
+        return std::foo();
+    }
+}
+```
+
+It doesn't touch `errno` or throw exceptions in constant evaluation context. If any error occur, It just returns `nan`.
+
+round, ceil, floor, sqrt, ldexp, frexp should be exact.
+
+sqrt should correctly round-to-nearest. err <= 1/2 ups.
+
+I ***try*** to implement round-to-nearest other math functions, e.g. sin, cos, exp, log.
+
+However, it is almost impossible to (correctly round the last bit for all cases).
+
+My global is  err <= (1/2 + (small number, like 0.01) ) ups. 
+
+I have arrive this global for sin and cos.
+
+But I still don't arrive this for all math functions. The largest error could be 1~2 ups I guess.
+
+#### `qd_real` and `dd_real`
+
+For most operation even basic operations like addition, multiply, division, the error is about several ups.
+
+# Some notes on changes to `QD`
+
+(Not completed)
 
 * `log()` refined for `dd_real`
-
-Refine log implementation for x near 1.
-
+* Refine log implementation for x near 1.
 * `read()` refined for `dd_real`
-
-Fix some bugs!
+* `ddrand` and `qdrand` now need parameter of generator, `lrand48` is not portable, and `std::rand()` is too bad.
+* `real_rand` for function template for `ddrand` and `qdrand`
+* Use `<chrono>` for timing. It's portable, precision, and performant.
+* Add more tests.
