@@ -26,6 +26,7 @@
 
 #include "bits.h"
 #include "double_math.h"
+#include "dd_math.h"
 
 
 inline void qd_real::error(const char *msg) {
@@ -2515,24 +2516,23 @@ inline QD_CONSTEXPR qd_real fmod(const qd_real &a, const qd_real &b) {
   return (a - b * n);
 }
 
-inline qd_real qdrand() {
-  static const double m_const = 4.6566128730773926e-10;  /* = 2^{-31} */
-  double m = m_const;
-  qd_real r = 0.0;
-  double d;
-
-  /* Strategy:  Generate 31 bits at a time, using lrand48 
-     random number generator.  Shift the bits, and repeat
-     7 times. */
-
-  for (int i = 0; i < 7; i++, m *= m_const) {
-    d = std::rand() * m;
-    r += d;
-  }
-
-  return r;
+template<class Gen>
+inline qd_real qdrand(Gen &gen) {
+    double const base_f = 1.110223024625156540E-16;
+    double r1 = drand(gen);
+    double r2 = drand(gen) * base_f;
+    double r3 = drand(gen) * (base_f * base_f);
+    double r4 = drand(gen) * (base_f * base_f * base_f);
+    qd::renorm(r1, r2, r3, r4);
+    return qd_real(r1, r2, r3, r4);
 }
 
+template<class T, class Gen>
+std::enable_if_t<std::is_same_v<T, qd_real>, qd_real>
+real_rand(Gen& gen)
+{
+    return qdrand(gen);
+}
 
 /* polyeval(c, n, x)
    Evaluates the given n-th degree polynomial at x.

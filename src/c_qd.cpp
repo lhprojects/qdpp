@@ -16,6 +16,7 @@
 #include <qd/qd_real.h>
 #include <qd/dd.h>
 #include <qd/c_qd.h>
+#include <random>
 
 #define TO_DOUBLE_PTR(a, ptr) ptr[0] = a.x[0]; ptr[1] = a.x[1]; \
                               ptr[2] = a.x[2]; ptr[3] = a.x[3];
@@ -409,9 +410,10 @@ void c_qd_neg(const double *a, double *b) {
   b[3] = -a[3];
 }
 
+extern std::mt19937 mt19937;
 void c_qd_rand(double *a) {
   qd_real aa;
-  aa = qdrand();
+  aa = qdrand(mt19937);
   TO_DOUBLE_PTR(aa, a);
 }
 

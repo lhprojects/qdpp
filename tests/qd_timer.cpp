@@ -255,7 +255,7 @@ void TestSuite<T>::test7() {
   print_timing(8.0*n, t, "dot");
 }
 template<class F, class T>
-void test(F f, T const &low, T const &hig, double n, char const * name)
+void test_arg1(F f, T const &low, T const &hig, double n, char const * name)
 {
     if (flag_verbose) {
         cout << endl;
@@ -285,6 +285,34 @@ void test(F f, T const &low, T const &hig, double n, char const * name)
     print_timing(n, t, name);
 }
 
+template<class T, class F>
+void test_arg0(F f, double n, char const* name)
+{
+    if (flag_verbose) {
+        cout << endl;
+        cout << "Timing " << name << " ..." << endl;
+    }
+
+    tictoc tv;
+
+    T a = 0.0;
+
+    double t;
+    tic(&tv);
+    for (uint64_t i = 0; i < uint64_t(n); i++) {
+        a += f();
+    }
+    t = toc(&tv);
+
+    if (flag_verbose) {
+        cout << "n = " << n << "   t = " << t << endl;
+        cout << "a = " << a << endl;
+        cout << n << " operations in " << t << " s." << endl;
+    }
+
+    print_timing(n, t, name);
+}
+
 template <class T>
 void TestSuite<T>::testall() {
   test1();
@@ -295,31 +323,40 @@ void TestSuite<T>::testall() {
 
   double n = 1E8 * factor() * long_factor;
 
-  test([](T const& a) ->T { return round(a);  }, T(-5.), T(5.), n, "round");
-  test([](T const& a) ->T { return ceil(a);  }, T(-5.), T(5.), n, "ceil");
-  test([](T const& a) ->T { return floor(a);  }, T(-5.), T(5.), n, "floor");
+  test_arg1([](T const& a) ->T { return round(a);  }, T(-5.), T(5.), n, "round");
+  test_arg1([](T const& a) ->T { return ceil(a);  }, T(-5.), T(5.), n, "ceil");
+  test_arg1([](T const& a) ->T { return floor(a);  }, T(-5.), T(5.), n, "floor");
 
 
-  test([](T const& a) ->T { return sin(a);  }, T(-5.), T(5.), n, "sin");
-  test([](T const& a) ->T { return cos(a);  }, T(-5.), T(5.), n, "cos");
-  test([](T const& a) ->T { return tan(a);  }, T(-5.), T(5.), n, "tan");
+  test_arg1([](T const& a) ->T { return sin(a);  }, T(-5.), T(5.), n, "sin");
+  test_arg1([](T const& a) ->T { return cos(a);  }, T(-5.), T(5.), n, "cos");
+  test_arg1([](T const& a) ->T { return tan(a);  }, T(-5.), T(5.), n, "tan");
   
-  test([](T const& a) ->T { return asin(a);  }, T(-1.), T(1.), n, "asin");
-  test([](T const& a) ->T { return acos(a);  }, T(-1.), T(1.), n, "acos");
-  test([](T const& a) ->T { return atan(a);  }, T(-5.), T(5.), n, "atan");
+  test_arg1([](T const& a) ->T { return asin(a);  }, T(-1.), T(1.), n, "asin");
+  test_arg1([](T const& a) ->T { return acos(a);  }, T(-1.), T(1.), n, "acos");
+  test_arg1([](T const& a) ->T { return atan(a);  }, T(-5.), T(5.), n, "atan");
   
-  test([](T const& a) ->T { return exp(a);  }, T(-5.), T(5.), n, "exp");
+  test_arg1([](T const& a) ->T { return exp(a);  }, T(-5.), T(5.), n, "exp");
 
-  test([](T const& a) ->T { return log(a);  }, T(0.1), T(5.), n, "log");
-  test([](T const& a) ->T { return log10(a);  }, T(0.1), T(5.), n, "log10");
+  test_arg1([](T const& a) ->T { return log(a);  }, T(0.1), T(5.), n, "log");
+  test_arg1([](T const& a) ->T { return log10(a);  }, T(0.1), T(5.), n, "log10");
 
-  test([](T const& a) ->T { return sinh(a);  }, T(-5.), T(5.), n, "sinh");
-  test([](T const& a) ->T { return sinh(a);  }, T(-0.05), T(0.05), n, "sinh[-0.05,0.05]");
-  test([](T const& a) ->T { return cosh(a);  }, T(-5.), T(5.), n, "cosh");
-  test([](T const& a) ->T { return tanh(a);  }, T(-5.), T(5.), n, "tanh");
-  test([](T const& a) ->T { return asinh(a);  }, T(-5.), T(5.), n, "asinh");
-  test([](T const& a) ->T { return acosh(a);  }, T(1), T(5.), n, "acosh");
-  test([](T const& a) ->T { return atanh(a);  }, T(-1), T(1.), n, "atanh");
+  test_arg1([](T const& a) ->T { return sinh(a);  }, T(-5.), T(5.), n, "sinh");
+  test_arg1([](T const& a) ->T { return sinh(a);  }, T(-0.05), T(0.05), n, "sinh[-0.05,0.05]");
+  test_arg1([](T const& a) ->T { return cosh(a);  }, T(-5.), T(5.), n, "cosh");
+  test_arg1([](T const& a) ->T { return tanh(a);  }, T(-5.), T(5.), n, "tanh");
+  test_arg1([](T const& a) ->T { return asinh(a);  }, T(-5.), T(5.), n, "asinh");
+  test_arg1([](T const& a) ->T { return acosh(a);  }, T(1), T(5.), n, "acosh");
+  test_arg1([](T const& a) ->T { return atanh(a);  }, T(-1), T(1.), n, "atanh");
+
+  std::mt19937 gen32;
+  std::mt19937_64 gen64;
+  test_arg0<T>([&]() ->T { return real_rand<T>(gen32);  }, n, "real_rand[MT19937_32]");
+  test_arg0<T>([&]() ->T { return real_rand<T>(gen64);  }, n, "real_rand[MT19937_64]");
+  if (sizeof(T) == sizeof(double)) {
+      test_arg0<T>([&]() ->double { return drand_fine(gen32);  }, n, "drand_fine[MT19937_32]");
+      test_arg0<T>([&]() ->double { return drand_fine(gen64);  }, n, "drand_fine[MT19937_64]");
+  }
 }
 
 void print_usage() {
@@ -340,6 +377,12 @@ void print_usage() {
 int main(int argc, char *argv[]) {
   unsigned int old_cw;
   fpu_fix_start(&old_cw);
+
+#ifdef QD_FMA
+  printf("FMA enabled\n");
+#else
+  printf("FMA disable\n");
+#endif
 
   /* Parse the arguments. */
   char *arg;

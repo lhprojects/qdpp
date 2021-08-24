@@ -460,6 +460,8 @@ void foo()
 }
 #endif
 
+
+
 void test_constexpr()
 {
 	QD_CONSTEXPR dd_real ceil1 = ceil(dd_real(1.));
@@ -505,16 +507,56 @@ void test_constexpr_qd()
 	QD_CONSTEXPR qd_real atanh2 = atanh(qd_real(2.));
 }
 
-int main() {
+void test_drand()
+{
+	std::mt19937 gen;
 
-	test_constexpr();
-	test_constexpr_qd();
+	{
+		double acc = 0;
+		for (int i = 0; i < 1000 * 1000; ++i)
+			acc += drand(gen);
+		acc /= double(1000) * 1000;
+		QdAssert(acc < 0.505 && acc > 0.495);
+	}
+	{
+		double acc = 0;
+		for (int i = 0; i < 1000 * 1000; ++i)
+			acc += drand_fine(gen);
+		acc /= double(1000) * 1000;
+		QdAssert(acc < 0.505 && acc > 0.495);
+	}
 
-	qd_real qdpi  = qd_real::_pi;
-	int nd = qd_real::_ndigits;
-	dd_real t = dd_real::add(1., -ldexp(1, -60));
-	dd_real tt = floor(t);
+}
 
+void test_ddrand()
+{
+	std::mt19937 gen;
+
+	{
+		dd_real acc = 0;
+		for (int i = 0; i < 1000 * 1000; ++i)
+			acc += ddrand(gen);
+		acc /= double(1000) * 1000;
+		QdAssert(acc < 0.505 && acc > 0.495);
+	}
+
+}
+
+void test_qdrand()
+{
+	std::mt19937 gen;
+	{
+		qd_real acc = 0;
+		for (int i = 0; i < 1000 * 1000; ++i)
+			acc += qdrand(gen);
+		acc /= double(1000) * 1000;
+		QdAssert(acc < 0.505 && acc > 0.495);
+	}
+
+}
+
+void test_read()
+{
 	QdAssert(to_int("0") == 0);
 	QdAssert(to_int("1") == 1);
 	QdAssert(to_int("2") == 2);
@@ -535,10 +577,21 @@ int main() {
 
 
 	dd_real a;
-    a = dd_real::read("0");
-    a = dd_real::read("1");
-    a = dd_real::read("2");
-    a = dd_real::read("3");
+	a = dd_real::read("0");
+	a = dd_real::read("1");
+	a = dd_real::read("2");
+	a = dd_real::read("3");
+
+}
+int main() {
+
+
+	test_constexpr();
+	test_constexpr_qd();
+
+	test_drand();
+	test_ddrand();
+	test_qdrand();
 
 	test_log();
 	test_asinh();

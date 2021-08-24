@@ -144,9 +144,10 @@ struct QD_API qd_real {
       std::ios_base::fmtflags fmt = static_cast<std::ios_base::fmtflags>(0), 
       bool showpos = false, bool uppercase = false, char fill = ' ') const;
 
-  //HL:
-  operator dd_real() {
-	  if(this->isnan()) return dd_real::_nan;
+  QD_CONSTEXPR explicit operator dd_real() {
+      // we assume dd_real knows nothing about qd_real
+      // so we use operator here
+      if(this->isnan()) return dd_real::_nan;
 	  return dd_real(x[0],x[1]);
   }
 };
@@ -156,7 +157,10 @@ QD_API qd_real polyeval(const qd_real *c, int n, const qd_real &x);
 QD_API qd_real polyroot(const qd_real *c, int n, 
     const qd_real &x0, int max_iter = 64, double thresh = 0.0);
 
-QD_API qd_real qdrand(void);
+// generate uniform random number in [0,1]
+template<class Gen>
+qd_real qdrand(Gen&);
+
 QD_CONSTEXPR qd_real sqrt(const qd_real &a);
 
 /* Computes  qd * d  where d is known to be a power of 2.

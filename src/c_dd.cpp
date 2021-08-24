@@ -273,9 +273,10 @@ void c_dd_neg(const double *a, double *b) {
   b[1] = -a[1];
 }
 
+std::mt19937 mt19937;
 void c_dd_rand(double *a) {
   dd_real aa;
-  aa = ddrand();
+  aa = ddrand(mt19937);
   TO_DOUBLE_PTR(aa, a);
 }
 
