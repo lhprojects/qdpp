@@ -422,7 +422,7 @@ namespace fb {
 1,1,1,1,1,1,0,0,0,1,1,1,1,0,1,1,
         };
 
-        // calculate a * _2opi to [2 bits . 121 bits] is enough
+        // calculate a * _2opi to [2 bits . 121 bits] is enough for double
         // of course, for abs(a) >= pi/4, if a <= pi/4 deal with it specailly
         // see ARGUMENT REDUCTION FOR HUGE ARGUMENTS: Good to the Last Bit
 
@@ -443,6 +443,7 @@ namespace fb {
 
         for (int i_ = 0; i_ < 175 + B; ++i_) {
             int i = exp_ + 120 + B - i_;
+            static_assert(1023 + 120 + B < (int)sizeof(_2opi));
             bool bit = 0;
             if (i >= 0) {
                 bit = _2opi[i];
