@@ -27,8 +27,7 @@ void fpu_fix_start(unsigned int* old_cw);
 void fpu_fix_end(unsigned int* old_cw);
 
 
-#include "config.h"
-#include <qd/fpu.h>
+#include "qd_config.h"
 
 #ifdef X86
 #ifdef  _WIN32

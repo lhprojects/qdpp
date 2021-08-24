@@ -18,13 +18,13 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
-#include <algorithm> //HL: for std::max
+#include <algorithm>
 
 #include "config.h"
-#include <qd/qd_real.h>
+#include "qd_real.h"
 #include "util.h"
 
-#include <qd/bits.h>
+#include "bits.h"
 #include "double_math.h"
 
 

@@ -13,7 +13,7 @@
 #ifndef _QD_C_QD_H
 #define _QD_C_QD_H
 
-#include <qd/c_dd.h>
+#include "c_dd.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -19,7 +19,7 @@
 #include "qd_config.h"
 #include "two_basics.h"
 #include "double_basics.h"
-#include "qd/bits.h"
+#include "bits.h"
 
 
 inline int get_double_expn(double x) {
