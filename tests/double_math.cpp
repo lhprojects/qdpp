@@ -1,6 +1,6 @@
 #include <qd/double_basics.h>
 #include <qd/double_math.h>
-
+#include <qd/dd.h>
 int nerr = 0;
 int neps = 2;
 #define QdAssert(x) do {\
@@ -70,104 +70,104 @@ using namespace fb;
 void test_isnan()
 {
 	static_assert(!fb::isinf_(std::numeric_limits<double>::quiet_NaN()));
-	static_assert(!fb::isinf(0.0));
-	static_assert(!fb::isinf(0.5));
-	static_assert(fb::isinf(std::numeric_limits<double>::infinity()));
-	static_assert(fb::isinf(-std::numeric_limits<double>::infinity()));
+	static_assert(!fb::isinf_(0.0));
+	static_assert(!fb::isinf_(0.5));
+	static_assert(fb::isinf_(std::numeric_limits<double>::infinity()));
+	static_assert(fb::isinf_(-std::numeric_limits<double>::infinity()));
 
-	static_assert(fb::isnan(std::numeric_limits<double>::quiet_NaN()));
-	static_assert(!fb::isnan(0.0));
-	static_assert(!fb::isnan(0.5));
-	static_assert(!fb::isnan(std::numeric_limits<double>::infinity()));
-	static_assert(!fb::isnan(-std::numeric_limits<double>::infinity()));
+	static_assert(fb::isnan_(std::numeric_limits<double>::quiet_NaN()));
+	static_assert(!fb::isnan_(0.0));
+	static_assert(!fb::isnan_(0.5));
+	static_assert(!fb::isnan_(std::numeric_limits<double>::infinity()));
+	static_assert(!fb::isnan_(-std::numeric_limits<double>::infinity()));
 
-	static_assert(!fb::isfinite(std::numeric_limits<double>::quiet_NaN()));
-	static_assert(fb::isfinite(0.0));
-	static_assert(fb::isfinite(0.5));
-	static_assert(!fb::isfinite(std::numeric_limits<double>::infinity()));
-	static_assert(!fb::isfinite(-std::numeric_limits<double>::infinity()));
+	static_assert(!fb::isfinite_(std::numeric_limits<double>::quiet_NaN()));
+	static_assert(fb::isfinite_(0.0));
+	static_assert(fb::isfinite_(0.5));
+	static_assert(!fb::isfinite_(std::numeric_limits<double>::infinity()));
+	static_assert(!fb::isfinite_(-std::numeric_limits<double>::infinity()));
 }
 
 void test_signbit()
 {
-	static_assert(!fb::signbit(0.));
-	static_assert(fb::signbit(-0.));
-	QdAssert(!fb::signbit(0.));
-	QdAssert(fb::signbit(-0.));
-	static_assert(!fb::signbit(1.));
-	static_assert(fb::signbit(-1.));
-	QdAssert(!fb::signbit(1.));
-	QdAssert(fb::signbit(-1.));
-	static_assert(!fb::signbit(std::numeric_limits<double>::infinity()));
-	static_assert(fb::signbit(-std::numeric_limits<double>::infinity()));
-	QdAssert(!fb::signbit(std::numeric_limits<double>::infinity()));
-	QdAssert(fb::signbit(-std::numeric_limits<double>::infinity()));
+	static_assert(!fb::signbit_(0.));
+	static_assert(fb::signbit_(-0.));
+	QdAssert(!fb::signbit_(0.));
+	QdAssert(fb::signbit_(-0.));
+	static_assert(!fb::signbit_(1.));
+	static_assert(fb::signbit_(-1.));
+	QdAssert(!fb::signbit_(1.));
+	QdAssert(fb::signbit_(-1.));
+	static_assert(!fb::signbit_(std::numeric_limits<double>::infinity()));
+	static_assert(fb::signbit_(-std::numeric_limits<double>::infinity()));
+	QdAssert(!fb::signbit_(std::numeric_limits<double>::infinity()));
+	QdAssert(fb::signbit_(-std::numeric_limits<double>::infinity()));
 
-	static_assert(!fb::signbit(std::numeric_limits<double>::quiet_NaN()));
-	static_assert(fb::signbit(-std::numeric_limits<double>::quiet_NaN()));
-	QdAssert(!fb::signbit(std::numeric_limits<double>::quiet_NaN()));
-	QdAssert(fb::signbit(-std::numeric_limits<double>::quiet_NaN()));
+	static_assert(!fb::signbit_(std::numeric_limits<double>::quiet_NaN()));
+	static_assert(fb::signbit_(-std::numeric_limits<double>::quiet_NaN()));
+	QdAssert(!fb::signbit_(std::numeric_limits<double>::quiet_NaN()));
+	QdAssert(fb::signbit_(-std::numeric_limits<double>::quiet_NaN()));
 }
 
 void test_abs()
 {
-	static_assert(std::bit_cast<uint64_t>(fb::abs(0.)) == std::bit_cast<uint64_t>(0.));
-	static_assert(std::bit_cast<uint64_t>(fb::abs(-0.)) == std::bit_cast<uint64_t>(0.));
-	QdAssert(std::bit_cast<uint64_t>(fb::abs(0.)) == std::bit_cast<uint64_t>(0.));
-	QdAssert(std::bit_cast<uint64_t>(fb::abs(-0.)) == std::bit_cast<uint64_t>(0.));
+	static_assert(std::bit_cast<uint64_t>(fb::abs_(0.)) == std::bit_cast<uint64_t>(0.));
+	static_assert(std::bit_cast<uint64_t>(fb::abs_(-0.)) == std::bit_cast<uint64_t>(0.));
+	QdAssert(std::bit_cast<uint64_t>(fb::abs_(0.)) == std::bit_cast<uint64_t>(0.));
+	QdAssert(std::bit_cast<uint64_t>(fb::abs_(-0.)) == std::bit_cast<uint64_t>(0.));
 
-	static_assert(std::bit_cast<uint64_t>(fb::abs(1.)) == std::bit_cast<uint64_t>(1.));
-	static_assert(std::bit_cast<uint64_t>(fb::abs(-1.)) == std::bit_cast<uint64_t>(1.));
-	QdAssert(std::bit_cast<uint64_t>(fb::abs(1.)) == std::bit_cast<uint64_t>(1.));
-	QdAssert(std::bit_cast<uint64_t>(fb::abs(-1.)) == std::bit_cast<uint64_t>(1.));
+	static_assert(std::bit_cast<uint64_t>(fb::abs_(1.)) == std::bit_cast<uint64_t>(1.));
+	static_assert(std::bit_cast<uint64_t>(fb::abs_(-1.)) == std::bit_cast<uint64_t>(1.));
+	QdAssert(std::bit_cast<uint64_t>(fb::abs_(1.)) == std::bit_cast<uint64_t>(1.));
+	QdAssert(std::bit_cast<uint64_t>(fb::abs_(-1.)) == std::bit_cast<uint64_t>(1.));
 
 	constexpr double inf = std::numeric_limits<double>::infinity();
 	constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 
-	static_assert(std::bit_cast<uint64_t>(fb::abs(inf)) == std::bit_cast<uint64_t>(inf));
-	static_assert(std::bit_cast<uint64_t>(fb::abs(-inf)) == std::bit_cast<uint64_t>(inf));
-	QdAssert(std::bit_cast<uint64_t>(fb::abs(inf)) == std::bit_cast<uint64_t>(inf));
-	QdAssert(std::bit_cast<uint64_t>(fb::abs(-inf)) == std::bit_cast<uint64_t>(inf));
+	static_assert(std::bit_cast<uint64_t>(fb::abs_(inf)) == std::bit_cast<uint64_t>(inf));
+	static_assert(std::bit_cast<uint64_t>(fb::abs_(-inf)) == std::bit_cast<uint64_t>(inf));
+	QdAssert(std::bit_cast<uint64_t>(fb::abs_(inf)) == std::bit_cast<uint64_t>(inf));
+	QdAssert(std::bit_cast<uint64_t>(fb::abs_(-inf)) == std::bit_cast<uint64_t>(inf));
 
-	static_assert(std::bit_cast<uint64_t>(fb::abs(nan)) == std::bit_cast<uint64_t>(nan));
-	static_assert(std::bit_cast<uint64_t>(fb::abs(-nan)) == std::bit_cast<uint64_t>(nan));
-	QdAssert(std::bit_cast<uint64_t>(fb::abs(nan)) == std::bit_cast<uint64_t>(nan));
-	QdAssert(std::bit_cast<uint64_t>(fb::abs(-nan)) == std::bit_cast<uint64_t>(nan));
+	static_assert(std::bit_cast<uint64_t>(fb::abs_(nan)) == std::bit_cast<uint64_t>(nan));
+	static_assert(std::bit_cast<uint64_t>(fb::abs_(-nan)) == std::bit_cast<uint64_t>(nan));
+	QdAssert(std::bit_cast<uint64_t>(fb::abs_(nan)) == std::bit_cast<uint64_t>(nan));
+	QdAssert(std::bit_cast<uint64_t>(fb::abs_(-nan)) == std::bit_cast<uint64_t>(nan));
 }
 
 void test_copysign()
 {
-	static_assert(std::bit_cast<uint64_t>(fb::copysign(0., 0.)) == std::bit_cast<uint64_t>(0.));
-	static_assert(std::bit_cast<uint64_t>(fb::copysign(0., -0.)) == std::bit_cast<uint64_t>(-0.));
-	QdAssert(std::bit_cast<uint64_t>(fb::copysign(0., 0.)) == std::bit_cast<uint64_t>(0.));
-	QdAssert(std::bit_cast<uint64_t>(fb::copysign(0., -0.)) == std::bit_cast<uint64_t>(-0.));
+	static_assert(std::bit_cast<uint64_t>(fb::copysign_(0., 0.)) == std::bit_cast<uint64_t>(0.));
+	static_assert(std::bit_cast<uint64_t>(fb::copysign_(0., -0.)) == std::bit_cast<uint64_t>(-0.));
+	QdAssert(std::bit_cast<uint64_t>(fb::copysign_(0., 0.)) == std::bit_cast<uint64_t>(0.));
+	QdAssert(std::bit_cast<uint64_t>(fb::copysign_(0., -0.)) == std::bit_cast<uint64_t>(-0.));
 
 }
 void test_round()
 {
-	static_assert(std::bit_cast<uint64_t>(fb::round(0.)) == std::bit_cast<uint64_t>(0.));
-	static_assert(std::bit_cast<uint64_t>(fb::round(-0.)) == std::bit_cast<uint64_t>(-0.));
-	QdAssert(std::bit_cast<uint64_t>(fb::round(0.)) == std::bit_cast<uint64_t>(0.));
-	QdAssert(std::bit_cast<uint64_t>(fb::round(-0.)) == std::bit_cast<uint64_t>(-0.));
+	static_assert(std::bit_cast<uint64_t>(fb::round_(0.)) == std::bit_cast<uint64_t>(0.));
+	static_assert(std::bit_cast<uint64_t>(fb::round_(-0.)) == std::bit_cast<uint64_t>(-0.));
+	QdAssert(std::bit_cast<uint64_t>(fb::round_(0.)) == std::bit_cast<uint64_t>(0.));
+	QdAssert(std::bit_cast<uint64_t>(fb::round_(-0.)) == std::bit_cast<uint64_t>(-0.));
 
-	static_assert(fb::round(0.49999999999999994) == 0.);
-	QdAssert(fb::round(0.49999999999999994) == 0.);
+	static_assert(fb::round_(0.49999999999999994) == 0.);
+	QdAssert(fb::round_(0.49999999999999994) == 0.);
 	static_assert(fb::round(-0.49999999999999994) == 0.);
 	QdAssert(fb::round(-0.49999999999999994) == -0.);
 
 	constexpr double inf = std::numeric_limits<double>::infinity();
 	constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 
-	static_assert(fb::round(inf) == inf);
-	QdAssert(fb::round(inf) == inf);
-	static_assert(fb::round(-inf) == -inf);
-	QdAssert(fb::round(-inf) == -inf);
+	static_assert(fb::round_(inf) == inf);
+	QdAssert(fb::round_(inf) == inf);
+	static_assert(fb::round_(-inf) == -inf);
+	QdAssert(fb::round_(-inf) == -inf);
 
-	static_assert(fb::isnan(fb::round(nan)));
-	QdAssert(fb::isnan(fb::round(-nan)));
+	static_assert(fb::isnan(fb::round_(nan)));
+	QdAssert(fb::isnan(fb::round_(-nan)));
 
-	static_assert(fb::round(10.499999999999998) == 10.);
-	QdAssert(fb::round(10.499999999999998) == 10.);
+	static_assert(fb::round_(10.499999999999998) == 10.);
+	QdAssert(fb::round_(10.499999999999998) == 10.);
 }
 
 void test_floor()
@@ -176,42 +176,42 @@ void test_floor()
 	constexpr double inf = std::numeric_limits<double>::infinity();
 	constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 
-	static_assert(fb::floor(inf) == inf);
-	QdAssert(fb::floor(inf) == inf);
-	static_assert(fb::floor(-inf) == -inf);
-	QdAssert(fb::floor(-inf) == -inf);
+	static_assert(fb::floor_(inf) == inf);
+	QdAssert(fb::floor_(inf) == inf);
+	static_assert(fb::floor_(-inf) == -inf);
+	QdAssert(fb::floor_(-inf) == -inf);
 
-	static_assert(fb::isnan(fb::floor(nan)));
-	QdAssert(fb::isnan(fb::floor(-nan)));
+	static_assert(fb::isnan(fb::floor_(nan)));
+	QdAssert(fb::isnan(fb::floor_(-nan)));
 
-	static_assert(std::bit_cast<uint64_t>(fb::floor(0.)) == std::bit_cast<uint64_t>(0.));
-	static_assert(std::bit_cast<uint64_t>(fb::floor(-0.)) == std::bit_cast<uint64_t>(-0.));
-	QdAssert(std::bit_cast<uint64_t>(fb::floor(0.)) == std::bit_cast<uint64_t>(0.));
-	QdAssert(std::bit_cast<uint64_t>(fb::floor(-0.)) == std::bit_cast<uint64_t>(-0.));
+	static_assert(std::bit_cast<uint64_t>(fb::floor_(0.)) == std::bit_cast<uint64_t>(0.));
+	static_assert(std::bit_cast<uint64_t>(fb::floor_(-0.)) == std::bit_cast<uint64_t>(-0.));
+	QdAssert(std::bit_cast<uint64_t>(fb::floor_(0.)) == std::bit_cast<uint64_t>(0.));
+	QdAssert(std::bit_cast<uint64_t>(fb::floor_(-0.)) == std::bit_cast<uint64_t>(-0.));
 
-	static_assert(fb::floor(0.5) == 0.0);
-	QdAssert(fb::floor(0.5) == 0.0);
+	static_assert(fb::floor_(0.5) == 0.0);
+	QdAssert(fb::floor_(0.5) == 0.0);
 
-	static_assert(fb::floor(1.) == 1.);
-	QdAssert(fb::floor(1.) == 1.);
+	static_assert(fb::floor_(1.) == 1.);
+	QdAssert(fb::floor_(1.) == 1.);
 
-	static_assert(fb::floor(1.5) == 1);
-	QdAssert(fb::floor(1.5) == 1);
+	static_assert(fb::floor_(1.5) == 1);
+	QdAssert(fb::floor_(1.5) == 1);
 
-	static_assert(fb::floor(-0.5) == -1.0);
-	QdAssert(fb::floor(-0.5) == -1.0);
+	static_assert(fb::floor_(-0.5) == -1.0);
+	QdAssert(fb::floor_(-0.5) == -1.0);
 
 	//static_assert(fb::floor(-1.) == -1.);
-	QdAssert(fb::floor(-1.) == -1.);
+	QdAssert(fb::floor_(-1.) == -1.);
 
 	//static_assert(fb::floor(-1.5) == -2.);
-	QdAssert(fb::floor(-1.5) == -2.);
+	QdAssert(fb::floor_(-1.5) == -2.);
 
-	static_assert(fb::floor(_int_max) == _int_max);
-	QdAssert(fb::floor(-_int_max) == -_int_max);
+	static_assert(fb::floor_(_int_max) == _int_max);
+	QdAssert(fb::floor_(-_int_max) == -_int_max);
 
-	static_assert(fb::floor(_max) == _max);
-	QdAssert(fb::floor(-_max) == -_max);
+	static_assert(fb::floor_(_max) == _max);
+	QdAssert(fb::floor_(-_max) == -_max);
 
 }
 
@@ -220,42 +220,42 @@ void test_ceil()
 	constexpr double inf = std::numeric_limits<double>::infinity();
 	constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 
-	static_assert(fb::ceil(inf) == inf);
+	static_assert(fb::ceil_(inf) == inf);
 	QdAssert(fb::ceil(inf) == inf);
-	static_assert(fb::ceil(-inf) == -inf);
-	QdAssert(fb::ceil(-inf) == -inf);
+	static_assert(fb::ceil_(-inf) == -inf);
+	QdAssert(fb::ceil_(-inf) == -inf);
 
-	static_assert(fb::isnan(fb::ceil(nan)));
-	QdAssert(fb::isnan(fb::ceil(-nan)));
+	static_assert(fb::isnan(fb::ceil_(nan)));
+	QdAssert(fb::isnan(fb::ceil_(-nan)));
 
-	static_assert(std::bit_cast<uint64_t>(fb::ceil(0.)) == std::bit_cast<uint64_t>(0.));
-	static_assert(std::bit_cast<uint64_t>(fb::ceil(-0.)) == std::bit_cast<uint64_t>(-0.));
-	QdAssert(std::bit_cast<uint64_t>(fb::ceil(0.)) == std::bit_cast<uint64_t>(0.));
-	QdAssert(std::bit_cast<uint64_t>(fb::ceil(-0.)) == std::bit_cast<uint64_t>(-0.));
+	static_assert(std::bit_cast<uint64_t>(fb::ceil_(0.)) == std::bit_cast<uint64_t>(0.));
+	static_assert(std::bit_cast<uint64_t>(fb::ceil_(-0.)) == std::bit_cast<uint64_t>(-0.));
+	QdAssert(std::bit_cast<uint64_t>(fb::ceil_(0.)) == std::bit_cast<uint64_t>(0.));
+	QdAssert(std::bit_cast<uint64_t>(fb::ceil_(-0.)) == std::bit_cast<uint64_t>(-0.));
 
-	static_assert(fb::ceil(0.5) == 1.0);
-	QdAssert(fb::ceil(0.5) == 1.0);
+	static_assert(fb::ceil_(0.5) == 1.0);
+	QdAssert(fb::ceil_(0.5) == 1.0);
 
-	static_assert(fb::ceil(1.) == 1.);
-	QdAssert(fb::ceil(1.) == 1.);
+	static_assert(fb::ceil_(1.) == 1.);
+	QdAssert(fb::ceil_(1.) == 1.);
 
-	static_assert(fb::ceil(1.5) == 2.);
-	QdAssert(fb::ceil(1.5) == 2.);
+	static_assert(fb::ceil_(1.5) == 2.);
+	QdAssert(fb::ceil_(1.5) == 2.);
 
-	static_assert(fb::ceil(-0.5) == -0.0);
-	QdAssert(fb::ceil(-0.5) == -0.0);
+	static_assert(fb::ceil_(-0.5) == -0.0);
+	QdAssert(fb::ceil_(-0.5) == -0.0);
 
-	static_assert(fb::ceil(-1.) == -1.);
-	QdAssert(fb::ceil(-1.) == -1.);
+	static_assert(fb::ceil_(-1.) == -1.);
+	QdAssert(fb::ceil_(-1.) == -1.);
 
-	static_assert(fb::ceil(-1.5) == -1.);
-	QdAssert(fb::ceil(-1.5) == -1.);
+	static_assert(fb::ceil_(-1.5) == -1.);
+	QdAssert(fb::ceil_(-1.5) == -1.);
 
-	static_assert(fb::ceil(_int_max) == _int_max);
-	QdAssert(fb::ceil(-_int_max) == -_int_max);
+	static_assert(fb::ceil_(_int_max) == _int_max);
+	QdAssert(fb::ceil_(-_int_max) == -_int_max);
 
-	static_assert(fb::ceil(_max) == _max);
-	QdAssert(fb::ceil(-_max) == -_max);
+	static_assert(fb::ceil_(_max) == _max);
+	QdAssert(fb::ceil_(-_max) == -_max);
 
 }
 
@@ -499,7 +499,7 @@ void test_sin()
 {
     QdAssert(fb::sin_(0.) == 0.);
     QdAssert(fb::sin_(_d_pi) == 1.2246467991473531772260659322749980E-16);
-    QdAssert(fb::sin_(2 * _d_pi) == -2 * 1.2246467991473531772260659322749980);
+    QdAssert(fb::sin_(2 * _d_pi) == -2 * 1.2246467991473531772260659322749980E-16);
 
 	// test precision
 
@@ -507,7 +507,15 @@ void test_sin()
     QdClose(fb::sin_(1), 0.8414709848078965066525023216302989996225630607983710656727517099);
     QdClose(fb::sin_(1.5), 0.9974949866040544309417233711414873227066514259221158219499748240);
     QdClose(fb::sin_(0.875), 0.76754350223602703963457546705453980969304345480560);
-	
+
+	QdClose(fb::sin_(1), 0.84147098480789650665250232163);
+	QdClose(fb::sin_(2), 0.909297426825681695396019865912);
+	QdClose(fb::sin_(3), 0.141120008059867222100744802808);
+	QdClose(fb::sin_(4), -0.756802495307928251372639094512);
+	QdClose(fb::sin_(5), -0.95892427466313846889315440615);
+	QdClose(fb::sin_(6), -0.27941549819892587281155544661);
+
+
 	QdAssert(fb::sin_(_d_pi / 2) == 1.);
     QdAssert(fb::sin_(-_d_pi / 2) == -1.);
 
@@ -518,7 +526,10 @@ void test_sin()
 
 	// test huge
 	QdClose(fb::sin_(1234567890), 0.9866539395014835605426723146285895945861167418886784440443422855);
-	QdClose(std::sin(1234567890), 0.9866539395014835605426723146285895945861167418886784440443422855);
+	QdClose(fb::sin_(-1234567890), -0.9866539395014835605426723146285895945861167418886784440443422855);
+
+	QdClose(fb::cos_(1234567890), -0.16283121219902165317838261390);
+	QdClose(fb::sin_(_max), 0.004961954789184061790502671197);
 }
 
 void test_cos()
@@ -534,16 +545,24 @@ void test_cos()
 	QdClose(fb::cos_(1.5), 0.0707372016677029100881898514342687090850910275633468694226454171);
 	QdClose(fb::cos_(1.5625), 0.0082962316238583774779064583372156289738830072478408249657);
 
+	QdClose(fb::cos_(1), 0.540302305868139717400936607443);
+	QdClose(fb::cos_(2), -0.416146836547142386997568229501);
+	QdClose(fb::cos_(3), -0.98999249660044545727157279473);
+	QdClose(fb::cos_(4), -0.653643620863611914639168183098);
+	QdClose(fb::cos_(5), 0.283662185463226264466639171514);
+	QdClose(fb::cos_(6), 0.960170286650366020545652297923);
 
 
 	QdAssert(fb::cos_(_d_pi / 2) == 6.1232339957367658861303296613750015E-17);
-	QdAssert(fb::cos_(-_d_pi / 2) == -6.1232339957367658861303296613750015E-17);
+	QdAssert(fb::cos_(-_d_pi / 2) == 6.1232339957367658861303296613750015E-17);
 
 	QdAssert(fb::cos_(0.25 * _d_pi) > 0);
 	QdAssert(fb::cos_(0.75 * _d_pi) < 0);
 	QdAssert(fb::cos_(1.25 * _d_pi) < 0);
 	QdAssert(fb::cos_(1.75 * _d_pi) > 0);
 
+	QdClose(fb::cos_(_max), -0.999987689426559937464870);
+	QdClose(fb::cos_(-1234567890), -0.16283121219902165317838261390);
 }
 
 
@@ -627,10 +646,29 @@ void test_nan()
 	double c = fb::nan_("");
 }
 
+void test()
+{
+	int n;
+	QdAssert(mod_pio2(-1, n) == +0.570796326794896619231321 && n == 3);
+	QdAssert(mod_pio2(-0.1, n) == -0.1 && n == 0);
+	QdAssert(mod_pio2(0.1, n) == 0.1 && n == 0);
+	QdAssert(mod_pio2(1, n) == -0.570796326794896619231321 && n == 1);
+	QdAssert(mod_pio2(2, n) == 0.42920367320510338076 && n == 1);
+	QdAssert(mod_pio2(3, n) == -0.14159265358979323 && n == 2);
+	QdAssert(mod_pio2(4, n) == -0.71238898038468985769396507491 && n == 3);
+	QdAssert(mod_pio2(5, n) == 0.2876110196153101423060349250 && n == 3);
+	QdAssert(mod_pio2(6, n) == -0.28318530717958647692528676655 && n == 0);
+	QdAssert(mod_pio2(_d_pi, n) == -1.2246467991473531772260E-16 && n == 2);
+	QdAssert(mod_pio2(_d_pi * 2, n) == 2 * -1.2246467991473531772260E-16 && n == 0);
+	QdAssert(mod_pio2(1000, n) == -0.59726016834914645035191 && n == 1);
+	QdAssert(mod_pio2(double(1000) * 1000, n) == -0.3575641670857350440 && n == 0);
+	QdAssert(mod_pio2(_int_max, n) == -0.556846549782149830 && n == 3);
+	QdAssert(mod_pio2(_max, n) == -0.00496197515078727320391468 && n == 2);
+
+}
 int main()
 {
-
-
+	test();
 	test_signbit();
 	test_copysign();
 	test_abs();
