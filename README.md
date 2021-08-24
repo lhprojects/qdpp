@@ -28,20 +28,26 @@ This library is a modification of  `QD` library. https://www.davidhbailey.com/dh
 ## Compute constants in compiling time
 ```c++
 constinit dd_real dd_sqrt2 = sqrt(dd_real(2.));
-constexpr dd_real dd_sqrt2_constexpr = sqrt(dd_real(2.));;
 
 constinit double double_sqrt2 = fb::sqrt(2.);
+
+// 1.4142135623730951
 constexpr double double_sqrt2_constexpr = fb::sqrt(2.);
+// 2.0000000000000004
 constinit double double_sqrt2_sqr = double_sqrt2_constexpr*double_sqrt2_constexpr;
 
+// 1.4142135623730951 -9.6672933134529159E-17
+constexpr dd_real dd_sqrt2_constexpr = sqrt(dd_real(2.));;
+// 2.
 constinit double dd_sqrt2_sqr_to_double = to_double(dd_sqrt2_constexpr*dd_sqrt2_constexpr);
+
 constexpr double dd_sqr2_sqr_to_double_constexpr = to_double(dd_sqrt2_constexpr*dd_sqrt2_constexpr);
 
 // can't use constinit
 double double_stdsqrt2 = sqrt(2);
 ```
 
-You can play with `qdpp` on godbolt  https://godbolt.org/z/nqrcs5Mfn.
+You can play with `qdpp` on godbolt  https://godbolt.org/z/dz614zecj.
 
 Note:
 
