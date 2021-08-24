@@ -306,14 +306,12 @@ namespace fb {
         double x_ = frexp_(x, &a);
         return log(x_) / _d_ln2 + a;
     }
-
-    bool self_add_car(uint64_t& a, uint64_t b)
+#if 0
+    inline bool self_add_car(uint64_t& a, uint64_t b)
     {
         a += b;
         return a < b;
     }
-
-
     bool get_double(uint64_t bits, uint64_t remain, double& r)
     {
         int lb = leading_bit(bits);
@@ -326,6 +324,7 @@ namespace fb {
             return false;
         }
     }
+#endif
 
     // a mod pi/2
     inline constexpr dd_real mod_pio2_dd(double a, int& n)

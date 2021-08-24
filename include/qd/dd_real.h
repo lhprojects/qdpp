@@ -35,7 +35,6 @@
 #include <iostream>
 #include <string>
 #include <limits>
-#include "config.h"
 #include "qd_config.h"
 
 struct dd_real {
