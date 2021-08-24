@@ -68,6 +68,12 @@ Note:
 * `double_stdsqrt2` will be initialized at the beginning of the execution.
 * It's more accuracy  to use `dd_real` as temporary variables.
 
+# Limitation
+
+* Fast math must be turn off for compiling.
+* Floating operation mode must be round-to-nearest
+* `qdpp` needs `std::bit_cast` or `__builtint_bit_cast`, thus you need very new compiler.
+
 # Compiler supports
 
 C++20 is need because the use of `std::bit_cast`.
