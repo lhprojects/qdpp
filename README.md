@@ -47,7 +47,7 @@ constexpr double dd_sqr2_sqr_to_double_constexpr = to_double(dd_sqrt2_constexpr*
 double double_stdsqrt2 = sqrt(2);
 ```
 
-You can play with `qdpp` on godbolt  https://godbolt.org/z/dz614zecj.
+You can play with `qdpp` on godbolt  https://godbolt.org/z/fKebqzKr1.
 
 Note:
 
