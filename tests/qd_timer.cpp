@@ -313,6 +313,20 @@ void test_arg0(F f, double n, char const* name)
     print_timing(n, t, name);
 }
 
+
+template<class T>
+T div3(T x)
+{
+    return (1. / T(3)) * x;
+}
+
+template<class T>
+T div3_constexpr(T x)
+{
+    constexpr T f = 1. / T(3);
+    return f * x;
+}
+
 template <class T>
 void TestSuite<T>::testall() {
   test1();
@@ -348,6 +362,14 @@ void TestSuite<T>::testall() {
   test_arg1([](T const& a) ->T { return asinh(a);  }, T(-5.), T(5.), n, "asinh");
   test_arg1([](T const& a) ->T { return acosh(a);  }, T(1), T(5.), n, "acosh");
   test_arg1([](T const& a) ->T { return atanh(a);  }, T(-1), T(1.), n, "atanh");
+
+  test_arg1([](T const& a) ->T {
+      return div3(a);
+  }, T(-1), T(1.), n, "mulpisqr");
+
+  test_arg1([](T const& a) ->T {
+      return div3_constexpr(a);
+      }, T(-1), T(1.), n, "mulpisqr_cstexpr");
 
   std::mt19937 gen32;
   std::mt19937_64 gen64;
