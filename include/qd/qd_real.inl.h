@@ -2621,11 +2621,19 @@ inline qd_real qd_real::debug_rand() {
 
 namespace qd_literals {
     inline namespace qd {
-        inline QD_CONSTEXPR qd_real operator""_qd(char const* s)
+        template<char... Chars>
+        QD_CONSTEXPR qd_real to_dd_real()
         {
-            return qd_real::read(s);
+            char buffer[] = { Chars..., '\0' };
+            return qd_real::read(buffer);
         }
 
+        template<char... Chars>
+        QD_CONSTEXPR qd_real operator ""_qd()
+        {
+            QD_CONSTEXPR qd_real u = to_dd_real<Chars...>();
+            return u;
+        }
 #if defined(QD_USE_ULL_LITERAL)
         inline QD_CONSTEXPR qd_real operator""_qd(unsigned long long u)
         {

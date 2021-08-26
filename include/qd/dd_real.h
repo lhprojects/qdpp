@@ -148,15 +148,6 @@ namespace std {
     };
 }
 
-namespace qd_literals {
-    inline namespace dd {
-        QD_CONSTEXPR dd_real operator""_dd(char const*);
-#if defined(QD_USE_ULL_LITERAL)
-        QD_CONSTEXPR dd_real operator""_dd(unsigned long long);
-#endif
-    }
-}
-
 QD_CONSTEXPR dd_real operator+(const dd_real &a, double b);
 QD_CONSTEXPR dd_real operator+(double a, const dd_real &b);
 QD_CONSTEXPR dd_real operator+(const dd_real &a, const dd_real &b);

@@ -670,9 +670,18 @@ inline constexpr dd_real dd_real::read(const char* s)
 namespace qd_literals {
     inline namespace dd {
 
-        inline QD_CONSTEXPR dd_real operator""_dd(char const* s)
+        template<char... Chars>
+        QD_CONSTEXPR dd_real to_dd_real()
         {
-            return dd_real::read(s);
+            char buffer[] = { Chars..., '\0' };
+            return dd_real::read(buffer);
+        }
+
+        template<char... Chars>
+        QD_CONSTEXPR dd_real operator ""_dd()
+        {
+            QD_CONSTEXPR dd_real u = to_dd_real<Chars...>();
+            return u;
         }
 
 #if defined(QD_USE_ULL_LITERAL)

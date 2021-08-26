@@ -152,15 +152,6 @@ struct QD_API qd_real {
 };
 
 
-namespace qd_literals {
-    inline namespace qd {
-        QD_CONSTEXPR qd_real operator""_qd(char const* s);
-#if defined(QD_USE_ULL_LITERAL)
-        QD_CONSTEXPR qd_real operator""_qd(unsigned long long u);
-#endif
-    }
-}
-
 QD_API qd_real polyeval(const qd_real *c, int n, const qd_real &x);
 QD_API qd_real polyroot(const qd_real *c, int n, 
     const qd_real &x0, int max_iter = 64, double thresh = 0.0);

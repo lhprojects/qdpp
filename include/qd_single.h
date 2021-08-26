@@ -606,15 +606,6 @@ namespace std {
     };
 }
 
-namespace qd_literals {
-    inline namespace dd {
-        QD_CONSTEXPR dd_real operator""_dd(char const*);
-#if defined(QD_USE_ULL_LITERAL)
-        QD_CONSTEXPR dd_real operator""_dd(unsigned long long);
-#endif
-    }
-}
-
 QD_CONSTEXPR dd_real operator+(const dd_real &a, double b);
 QD_CONSTEXPR dd_real operator+(double a, const dd_real &b);
 QD_CONSTEXPR dd_real operator+(const dd_real &a, const dd_real &b);
@@ -2404,9 +2395,18 @@ inline constexpr dd_real dd_real::read(const char* s)
 namespace qd_literals {
     inline namespace dd {
 
-        inline QD_CONSTEXPR dd_real operator""_dd(char const* s)
+        template<char... Chars>
+        QD_CONSTEXPR dd_real to_dd_real()
         {
-            return dd_real::read(s);
+            char buffer[] = { Chars..., '\0' };
+            return dd_real::read(buffer);
+        }
+
+        template<char... Chars>
+        QD_CONSTEXPR dd_real operator ""_dd()
+        {
+            QD_CONSTEXPR dd_real u = to_dd_real<Chars...>();
+            return u;
         }
 
 #if defined(QD_USE_ULL_LITERAL)
@@ -5657,15 +5657,6 @@ struct QD_API qd_real {
   }
 };
 
-
-namespace qd_literals {
-    inline namespace qd {
-        QD_CONSTEXPR qd_real operator""_qd(char const* s);
-#if defined(QD_USE_ULL_LITERAL)
-        QD_CONSTEXPR qd_real operator""_qd(unsigned long long u);
-#endif
-    }
-}
 
 QD_API qd_real polyeval(const qd_real *c, int n, const qd_real &x);
 QD_API qd_real polyroot(const qd_real *c, int n, 
@@ -9512,11 +9503,19 @@ inline qd_real qd_real::debug_rand() {
 
 namespace qd_literals {
     inline namespace qd {
-        inline QD_CONSTEXPR qd_real operator""_qd(char const* s)
+        template<char... Chars>
+        QD_CONSTEXPR qd_real to_dd_real()
         {
-            return qd_real::read(s);
+            char buffer[] = { Chars..., '\0' };
+            return qd_real::read(buffer);
         }
 
+        template<char... Chars>
+        QD_CONSTEXPR qd_real operator ""_qd()
+        {
+            QD_CONSTEXPR qd_real u = to_dd_real<Chars...>();
+            return u;
+        }
 #if defined(QD_USE_ULL_LITERAL)
         inline QD_CONSTEXPR qd_real operator""_qd(unsigned long long u)
         {
