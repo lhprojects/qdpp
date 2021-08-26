@@ -155,7 +155,7 @@ struct QD_API qd_real {
 namespace qd_literals {
     inline namespace qd {
         QD_CONSTEXPR qd_real operator""_qd(char const* s);
-#if defined(QD_USE_ULL_LITERAL) && QD_USE_ULL_LITERAL
+#if defined(QD_USE_ULL_LITERAL)
         QD_CONSTEXPR qd_real operator""_qd(unsigned long long u);
 #endif
     }

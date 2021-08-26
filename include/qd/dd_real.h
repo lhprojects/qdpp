@@ -151,7 +151,7 @@ namespace std {
 namespace qd_literals {
     inline namespace dd {
         QD_CONSTEXPR dd_real operator""_dd(char const*);
-#if defined(QD_USE_ULL_LITERAL) && QD_USE_ULL_LITERAL
+#if defined(QD_USE_ULL_LITERAL)
         QD_CONSTEXPR dd_real operator""_dd(unsigned long long);
 #endif
     }

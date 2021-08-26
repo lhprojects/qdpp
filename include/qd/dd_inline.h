@@ -675,7 +675,7 @@ namespace qd_literals {
             return dd_real::read(s);
         }
 
-#if defined(QD_USE_ULL_LITERAL) && QD_USE_ULL_LITERAL
+#if defined(QD_USE_ULL_LITERAL)
         inline QD_CONSTEXPR dd_real operator""_dd(unsigned long long u)
         {
             if (u <= UINT64_MAX) {

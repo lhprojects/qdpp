@@ -2626,7 +2626,7 @@ namespace qd_literals {
             return qd_real::read(s);
         }
 
-#if defined(QD_USE_ULL_LITERAL) && QD_USE_ULL_LITERAL
+#if defined(QD_USE_ULL_LITERAL)
         inline QD_CONSTEXPR qd_real operator""_qd(unsigned long long u)
         {
             if (u <= UINT64_MAX) {
