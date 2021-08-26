@@ -9504,7 +9504,7 @@ inline qd_real qd_real::debug_rand() {
 namespace qd_literals {
     inline namespace qd {
         template<char... Chars>
-        QD_CONSTEXPR qd_real to_dd_real()
+        QD_CONSTEXPR qd_real to_qd_real()
         {
             char buffer[] = { Chars..., '\0' };
             return qd_real::read(buffer);
@@ -9513,7 +9513,7 @@ namespace qd_literals {
         template<char... Chars>
         QD_CONSTEXPR qd_real operator ""_qd()
         {
-            QD_CONSTEXPR qd_real u = to_dd_real<Chars...>();
+            QD_CONSTEXPR qd_real u = to_qd_real<Chars...>();
             return u;
         }
 #if defined(QD_USE_ULL_LITERAL)
