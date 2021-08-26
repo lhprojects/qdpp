@@ -778,7 +778,7 @@ inline QD_CONSTEXPR qd_real &qd_real::operator/=(const qd_real &a) {
 
 
 /********** Exponentiation **********/
-inline qd_real qd_real::operator^(int n) const {
+inline QD_CONSTEXPR qd_real qd_real::operator^(int n) const {
   return pow(*this, n);
 }
 

@@ -19,7 +19,6 @@
 #include "double_basics.h"
 #include "util.h"
 
-
 QD_CONSTEXPR bool dd_real::isnan() const { return QD_ISNAN(x[0]) || QD_ISNAN(x[1]); }
 QD_CONSTEXPR bool dd_real::isfinite() const { return QD_ISFINITE(x[0]); }
 QD_CONSTEXPR bool dd_real::isinf() const { return QD_ISINF(x[0]); }
@@ -667,4 +666,30 @@ inline constexpr dd_real dd_real::read(const char* s)
     return a;
 }
 
+
+namespace qd_literals {
+    inline namespace dd {
+
+        inline QD_CONSTEXPR dd_real operator""_dd(char const* s)
+        {
+            return dd_real::read(s);
+        }
+
+#if defined(QD_USE_ULL_LITERAL) && QD_USE_ULL_LITERAL
+        inline QD_CONSTEXPR dd_real operator""_dd(unsigned long long u)
+        {
+            if (u <= UINT64_MAX) {
+                double hi = u >> 32;
+                double lo = u & UINT32_MAX;
+                hi = ::qd::two_sum(hi, lo, lo);
+                return dd_real(hi, lo);
+            } else {
+                fprintf(stderr, "range overflow: can't convert unsigned long long"
+                    "(%llu) to dd_real", u);
+                std::terminate();
+            }
+        }
+#endif
+    }
+}
 #endif /* _QD_DD_INLINE_H */

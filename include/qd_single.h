@@ -606,47 +606,56 @@ namespace std {
     };
 }
 
-QD_API constexpr dd_real operator+(const dd_real &a, double b);
-QD_API constexpr dd_real operator+(double a, const dd_real &b);
-QD_API constexpr dd_real operator+(const dd_real &a, const dd_real &b);
+namespace qd_literals {
+    inline namespace dd {
+        QD_CONSTEXPR dd_real operator""_dd(char const*);
+#if defined(QD_USE_ULL_LITERAL) && QD_USE_ULL_LITERAL
+        QD_CONSTEXPR dd_real operator""_dd(unsigned long long);
+#endif
+    }
+}
 
-QD_API constexpr dd_real operator-(const dd_real &a, double b);
-QD_API constexpr dd_real operator-(double a, const dd_real &b);
-QD_API constexpr dd_real operator-(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR dd_real operator+(const dd_real &a, double b);
+QD_CONSTEXPR dd_real operator+(double a, const dd_real &b);
+QD_CONSTEXPR dd_real operator+(const dd_real &a, const dd_real &b);
 
-QD_API constexpr dd_real operator*(const dd_real &a, double b);
-QD_API constexpr dd_real operator*(double a, const dd_real &b);
-QD_API constexpr dd_real operator*(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR dd_real operator-(const dd_real &a, double b);
+QD_CONSTEXPR dd_real operator-(double a, const dd_real &b);
+QD_CONSTEXPR dd_real operator-(const dd_real &a, const dd_real &b);
 
-QD_API constexpr dd_real operator/(const dd_real &a, double b);
-QD_API constexpr dd_real operator/(double a, const dd_real &b);
-QD_API constexpr dd_real operator/(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR dd_real operator*(const dd_real &a, double b);
+QD_CONSTEXPR dd_real operator*(double a, const dd_real &b);
+QD_CONSTEXPR dd_real operator*(const dd_real &a, const dd_real &b);
 
-QD_API constexpr dd_real inv(const dd_real &a);
+QD_CONSTEXPR dd_real operator/(const dd_real &a, double b);
+QD_CONSTEXPR dd_real operator/(double a, const dd_real &b);
+QD_CONSTEXPR dd_real operator/(const dd_real &a, const dd_real &b);
 
-constexpr bool operator==(const dd_real &a, double b);
-constexpr bool operator==(double a, const dd_real &b);
-constexpr bool operator==(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR dd_real inv(const dd_real &a);
 
-QD_API constexpr bool operator<=(const dd_real &a, double b);
-QD_API constexpr bool operator<=(double a, const dd_real &b);
-QD_API constexpr bool operator<=(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR bool operator==(const dd_real &a, double b);
+QD_CONSTEXPR bool operator==(double a, const dd_real &b);
+QD_CONSTEXPR bool operator==(const dd_real &a, const dd_real &b);
 
-QD_API constexpr bool operator>=(const dd_real &a, double b);
-QD_API constexpr bool operator>=(double a, const dd_real &b);
-QD_API constexpr bool operator>=(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR bool operator<=(const dd_real &a, double b);
+QD_CONSTEXPR bool operator<=(double a, const dd_real &b);
+QD_CONSTEXPR bool operator<=(const dd_real &a, const dd_real &b);
 
-QD_API constexpr bool operator<(const dd_real &a, double b);
-QD_API constexpr bool operator<(double a, const dd_real &b);
-QD_API constexpr bool operator<(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR bool operator>=(const dd_real &a, double b);
+QD_CONSTEXPR bool operator>=(double a, const dd_real &b);
+QD_CONSTEXPR bool operator>=(const dd_real &a, const dd_real &b);
 
-QD_API constexpr bool operator>(const dd_real &a, double b);
-QD_API constexpr bool operator>(double a, const dd_real &b);
-QD_API constexpr bool operator>(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR bool operator<(const dd_real &a, double b);
+QD_CONSTEXPR bool operator<(double a, const dd_real &b);
+QD_CONSTEXPR bool operator<(const dd_real &a, const dd_real &b);
 
-QD_API constexpr bool operator!=(const dd_real &a, double b);
-QD_API constexpr bool operator!=(double a, const dd_real &b);
-QD_API constexpr bool operator!=(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR bool operator>(const dd_real &a, double b);
+QD_CONSTEXPR bool operator>(double a, const dd_real &b);
+QD_CONSTEXPR bool operator>(const dd_real &a, const dd_real &b);
+
+QD_CONSTEXPR bool operator!=(const dd_real &a, double b);
+QD_CONSTEXPR bool operator!=(double a, const dd_real &b);
+QD_CONSTEXPR bool operator!=(const dd_real &a, const dd_real &b);
 
 
 /* Round to double */
@@ -1744,7 +1753,6 @@ inline void append_expn(std::string &str, int expn) {
 
 #endif
 
-
 QD_CONSTEXPR bool dd_real::isnan() const { return QD_ISNAN(x[0]) || QD_ISNAN(x[1]); }
 QD_CONSTEXPR bool dd_real::isfinite() const { return QD_ISFINITE(x[0]); }
 QD_CONSTEXPR bool dd_real::isinf() const { return QD_ISINF(x[0]); }
@@ -2392,6 +2400,32 @@ inline constexpr dd_real dd_real::read(const char* s)
     return a;
 }
 
+
+namespace qd_literals {
+    inline namespace dd {
+
+        inline QD_CONSTEXPR dd_real operator""_dd(char const* s)
+        {
+            return dd_real::read(s);
+        }
+
+#if defined(QD_USE_ULL_LITERAL) && QD_USE_ULL_LITERAL
+        inline QD_CONSTEXPR dd_real operator""_dd(unsigned long long u)
+        {
+            if (u <= UINT64_MAX) {
+                double hi = u >> 32;
+                double lo = u & UINT32_MAX;
+                hi = ::qd::two_sum(hi, lo, lo);
+                return dd_real(hi, lo);
+            } else {
+                fprintf(stderr, "range overflow: can't convert unsigned long long"
+                    "(%llu) to dd_real", u);
+                std::terminate();
+            }
+        }
+#endif
+    }
+}
 #endif /* _QD_DD_INLINE_H */
 #endif /* _QD_DD_REAL_H */
 
@@ -5576,11 +5610,11 @@ struct QD_API qd_real {
   QD_CONSTEXPR static qd_real sloppy_div(const qd_real &a, const qd_real &b);
   QD_CONSTEXPR static qd_real accurate_div(const qd_real &a, const qd_real &b);
 
-  constexpr qd_real &operator/=(double a);
-  constexpr qd_real &operator/=(const dd_real &a);
-  constexpr qd_real &operator/=(const qd_real &a);
+  QD_CONSTEXPR qd_real &operator/=(double a);
+  QD_CONSTEXPR qd_real &operator/=(const dd_real &a);
+  QD_CONSTEXPR qd_real &operator/=(const qd_real &a);
 
-  qd_real operator^(int n) const;
+  QD_CONSTEXPR qd_real operator^(int n) const;
 
   constexpr qd_real operator+() const;
   constexpr qd_real operator-() const;
@@ -5602,7 +5636,8 @@ struct QD_API qd_real {
   std::string to_strig(int precision = _ndigits, int width = 0, 
       std::ios_base::fmtflags fmt = static_cast<std::ios_base::fmtflags>(0), 
       bool showpos = false, bool uppercase = false, char fill = ' ') const;
-  static int read(const char *s, qd_real &a);
+  QD_CONSTEXPR static int read(const char *s, qd_real &a);
+  QD_CONSTEXPR static qd_real read(const char* s);
 
   /* Debugging methods */
   void dump(const std::string &name = "", std::ostream &os = std::cerr) const;
@@ -5622,6 +5657,15 @@ struct QD_API qd_real {
   }
 };
 
+
+namespace qd_literals {
+    inline namespace qd {
+        QD_CONSTEXPR qd_real operator""_qd(char const* s);
+#if defined(QD_USE_ULL_LITERAL) && QD_USE_ULL_LITERAL
+        QD_CONSTEXPR qd_real operator""_qd(unsigned long long u);
+#endif
+    }
+}
 
 QD_API qd_real polyeval(const qd_real *c, int n, const qd_real &x);
 QD_API qd_real polyroot(const qd_real *c, int n, 
@@ -6537,7 +6581,7 @@ inline QD_CONSTEXPR qd_real &qd_real::operator/=(const qd_real &a) {
 
 
 /********** Exponentiation **********/
-inline qd_real qd_real::operator^(int n) const {
+inline QD_CONSTEXPR qd_real qd_real::operator^(int n) const {
   return pow(*this, n);
 }
 
@@ -7042,7 +7086,7 @@ inline std::ostream &operator<<(std::ostream &os, const qd_real &qd) {
 }
 
 /* Read a quad-double from s. */
-inline int qd_real::read(const char *s, qd_real &qd) {
+inline QD_CONSTEXPR int qd_real::read(const char *s, qd_real &qd) {
   const char *p = s;
   char ch;
   int sign = 0;
@@ -7082,16 +7126,12 @@ inline int qd_real::read(const char *s, qd_real &qd) {
         break;
       case 'E':
       case 'e':
-        int nread;
-#ifdef _MSC_VER
-        nread = sscanf_s(p + 1, "%d", &e);
-#else
-        nread = std::sscanf(p+1, "%d", &e);
-#endif
-        done = true;
-        if (nread != 1)
-          return -1;  /* read of exponent failed. */
-        break;
+          ++p;
+          if (read_int(p, e) < 0) {
+              return -1;
+          }
+          done = true;
+          break;
       case ' ':
         done = true;
         break;
@@ -7119,6 +7159,16 @@ inline int qd_real::read(const char *s, qd_real &qd) {
   qd = (sign < 0) ? -r : r;
   return 0;
 }
+
+inline QD_CONSTEXPR qd_real qd_real::read(const char* s)
+{
+    qd_real u;
+    if (qd_real::read(s, u) < 0) {
+        return qd_real::_nan;
+    }
+    return u;
+}
+
 
 inline void qd_real::to_digits(char *s, int &expn, int precision) const {
   int D = precision + 1;  /* number of digits to compute */
@@ -9455,6 +9505,34 @@ inline qd_real qd_real::debug_rand() {
     expn = expn + 54 + std::rand() % 200;
   }
   return a;
+}
+
+
+/********** Literals **********/
+
+namespace qd_literals {
+    inline namespace qd {
+        inline QD_CONSTEXPR qd_real operator""_qd(char const* s)
+        {
+            return qd_real::read(s);
+        }
+
+#if defined(QD_USE_ULL_LITERAL) && QD_USE_ULL_LITERAL
+        inline QD_CONSTEXPR qd_real operator""_qd(unsigned long long u)
+        {
+            if (u <= UINT64_MAX) {
+                double hi = u >> 32;
+                double lo = u & UINT32_MAX;
+                hi = ::qd::two_sum(hi, lo, lo);
+                return qd_real(hi, lo, 0, 0);
+            } else {
+                fprintf(stderr, "range overflow: can't convert unsigned long long"
+                    "(%llu) to qd_real", u);
+                std::terminate();
+            }
+        }
+#endif
+    }
 }
 
 // put limits at the tail to resolve dependecy

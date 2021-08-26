@@ -195,7 +195,7 @@ inline std::ostream &operator<<(std::ostream &os, const qd_real &qd) {
 }
 
 /* Read a quad-double from s. */
-inline int qd_real::read(const char *s, qd_real &qd) {
+inline QD_CONSTEXPR int qd_real::read(const char *s, qd_real &qd) {
   const char *p = s;
   char ch;
   int sign = 0;
@@ -235,16 +235,12 @@ inline int qd_real::read(const char *s, qd_real &qd) {
         break;
       case 'E':
       case 'e':
-        int nread;
-#ifdef _MSC_VER
-        nread = sscanf_s(p + 1, "%d", &e);
-#else
-        nread = std::sscanf(p+1, "%d", &e);
-#endif
-        done = true;
-        if (nread != 1)
-          return -1;  /* read of exponent failed. */
-        break;
+          ++p;
+          if (read_int(p, e) < 0) {
+              return -1;
+          }
+          done = true;
+          break;
       case ' ':
         done = true;
         break;
@@ -272,6 +268,16 @@ inline int qd_real::read(const char *s, qd_real &qd) {
   qd = (sign < 0) ? -r : r;
   return 0;
 }
+
+inline QD_CONSTEXPR qd_real qd_real::read(const char* s)
+{
+    qd_real u;
+    if (qd_real::read(s, u) < 0) {
+        return qd_real::_nan;
+    }
+    return u;
+}
+
 
 inline void qd_real::to_digits(char *s, int &expn, int precision) const {
   int D = precision + 1;  /* number of digits to compute */
@@ -2608,4 +2614,32 @@ inline qd_real qd_real::debug_rand() {
     expn = expn + 54 + std::rand() % 200;
   }
   return a;
+}
+
+
+/********** Literals **********/
+
+namespace qd_literals {
+    inline namespace qd {
+        inline QD_CONSTEXPR qd_real operator""_qd(char const* s)
+        {
+            return qd_real::read(s);
+        }
+
+#if defined(QD_USE_ULL_LITERAL) && QD_USE_ULL_LITERAL
+        inline QD_CONSTEXPR qd_real operator""_qd(unsigned long long u)
+        {
+            if (u <= UINT64_MAX) {
+                double hi = u >> 32;
+                double lo = u & UINT32_MAX;
+                hi = ::qd::two_sum(hi, lo, lo);
+                return qd_real(hi, lo, 0, 0);
+            } else {
+                fprintf(stderr, "range overflow: can't convert unsigned long long"
+                    "(%llu) to qd_real", u);
+                std::terminate();
+            }
+        }
+#endif
+    }
 }

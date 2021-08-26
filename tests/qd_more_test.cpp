@@ -575,6 +575,22 @@ void test_read()
 	constexpr dd_real a6 = dd_real::read("10");
 	constexpr dd_real a7 = dd_real::read("-10");
 
+	{
+		constexpr dd_real dd_1 = dd_real::read("1");
+		constexpr dd_real dd_10 = dd_real::read("1E1");
+		constexpr qd_real qd_1 = qd_real::read("1");
+		constexpr qd_real qd_10 = qd_real::read("1E1");
+		constexpr dd_real dd_m1 = dd_real::read("-1");
+		constexpr dd_real dd_m10 = dd_real::read("-1E1");
+		constexpr qd_real qd_m1 = qd_real::read("-1");
+		constexpr qd_real qd_m10 = qd_real::read("-1E1");
+
+		constexpr dd_real dd_m1Em1 = dd_real::read("-1E-1");
+		constexpr dd_real dd_m10Em1 = dd_real::read("-10E-1");
+		constexpr qd_real qd_m1Em1 = qd_real::read("-1E-1");
+		constexpr qd_real qd_m10Em1 = qd_real::read("-10E-1");
+		qd_real qd_m10Em1_ = qd_real::read("-10E-1");
+	}
 
 	dd_real a;
 	a = dd_real::read("0");
@@ -582,12 +598,20 @@ void test_read()
 	a = dd_real::read("2");
 	a = dd_real::read("3");
 
+	using namespace qd_literals;
+	const auto vv = 1ull;
+
+	QdAssert(1_dd == 1.);
+	QdAssert(1._dd == 1.);
+
+	QdAssert(1_qd == 1.);
+	QdAssert(1._dd == 1.);
 }
 int main() {
 
-
 	test_constexpr();
 	test_constexpr_qd();
+	test_read();
 
 	test_drand();
 	test_ddrand();

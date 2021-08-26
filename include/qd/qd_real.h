@@ -104,11 +104,11 @@ struct QD_API qd_real {
   QD_CONSTEXPR static qd_real sloppy_div(const qd_real &a, const qd_real &b);
   QD_CONSTEXPR static qd_real accurate_div(const qd_real &a, const qd_real &b);
 
-  constexpr qd_real &operator/=(double a);
-  constexpr qd_real &operator/=(const dd_real &a);
-  constexpr qd_real &operator/=(const qd_real &a);
+  QD_CONSTEXPR qd_real &operator/=(double a);
+  QD_CONSTEXPR qd_real &operator/=(const dd_real &a);
+  QD_CONSTEXPR qd_real &operator/=(const qd_real &a);
 
-  qd_real operator^(int n) const;
+  QD_CONSTEXPR qd_real operator^(int n) const;
 
   constexpr qd_real operator+() const;
   constexpr qd_real operator-() const;
@@ -130,7 +130,8 @@ struct QD_API qd_real {
   std::string to_strig(int precision = _ndigits, int width = 0, 
       std::ios_base::fmtflags fmt = static_cast<std::ios_base::fmtflags>(0), 
       bool showpos = false, bool uppercase = false, char fill = ' ') const;
-  static int read(const char *s, qd_real &a);
+  QD_CONSTEXPR static int read(const char *s, qd_real &a);
+  QD_CONSTEXPR static qd_real read(const char* s);
 
   /* Debugging methods */
   void dump(const std::string &name = "", std::ostream &os = std::cerr) const;
@@ -150,6 +151,15 @@ struct QD_API qd_real {
   }
 };
 
+
+namespace qd_literals {
+    inline namespace qd {
+        QD_CONSTEXPR qd_real operator""_qd(char const* s);
+#if defined(QD_USE_ULL_LITERAL) && QD_USE_ULL_LITERAL
+        QD_CONSTEXPR qd_real operator""_qd(unsigned long long u);
+#endif
+    }
+}
 
 QD_API qd_real polyeval(const qd_real *c, int n, const qd_real &x);
 QD_API qd_real polyroot(const qd_real *c, int n, 

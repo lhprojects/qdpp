@@ -148,47 +148,56 @@ namespace std {
     };
 }
 
-QD_API constexpr dd_real operator+(const dd_real &a, double b);
-QD_API constexpr dd_real operator+(double a, const dd_real &b);
-QD_API constexpr dd_real operator+(const dd_real &a, const dd_real &b);
+namespace qd_literals {
+    inline namespace dd {
+        QD_CONSTEXPR dd_real operator""_dd(char const*);
+#if defined(QD_USE_ULL_LITERAL) && QD_USE_ULL_LITERAL
+        QD_CONSTEXPR dd_real operator""_dd(unsigned long long);
+#endif
+    }
+}
 
-QD_API constexpr dd_real operator-(const dd_real &a, double b);
-QD_API constexpr dd_real operator-(double a, const dd_real &b);
-QD_API constexpr dd_real operator-(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR dd_real operator+(const dd_real &a, double b);
+QD_CONSTEXPR dd_real operator+(double a, const dd_real &b);
+QD_CONSTEXPR dd_real operator+(const dd_real &a, const dd_real &b);
 
-QD_API constexpr dd_real operator*(const dd_real &a, double b);
-QD_API constexpr dd_real operator*(double a, const dd_real &b);
-QD_API constexpr dd_real operator*(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR dd_real operator-(const dd_real &a, double b);
+QD_CONSTEXPR dd_real operator-(double a, const dd_real &b);
+QD_CONSTEXPR dd_real operator-(const dd_real &a, const dd_real &b);
 
-QD_API constexpr dd_real operator/(const dd_real &a, double b);
-QD_API constexpr dd_real operator/(double a, const dd_real &b);
-QD_API constexpr dd_real operator/(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR dd_real operator*(const dd_real &a, double b);
+QD_CONSTEXPR dd_real operator*(double a, const dd_real &b);
+QD_CONSTEXPR dd_real operator*(const dd_real &a, const dd_real &b);
 
-QD_API constexpr dd_real inv(const dd_real &a);
+QD_CONSTEXPR dd_real operator/(const dd_real &a, double b);
+QD_CONSTEXPR dd_real operator/(double a, const dd_real &b);
+QD_CONSTEXPR dd_real operator/(const dd_real &a, const dd_real &b);
 
-constexpr bool operator==(const dd_real &a, double b);
-constexpr bool operator==(double a, const dd_real &b);
-constexpr bool operator==(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR dd_real inv(const dd_real &a);
 
-QD_API constexpr bool operator<=(const dd_real &a, double b);
-QD_API constexpr bool operator<=(double a, const dd_real &b);
-QD_API constexpr bool operator<=(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR bool operator==(const dd_real &a, double b);
+QD_CONSTEXPR bool operator==(double a, const dd_real &b);
+QD_CONSTEXPR bool operator==(const dd_real &a, const dd_real &b);
 
-QD_API constexpr bool operator>=(const dd_real &a, double b);
-QD_API constexpr bool operator>=(double a, const dd_real &b);
-QD_API constexpr bool operator>=(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR bool operator<=(const dd_real &a, double b);
+QD_CONSTEXPR bool operator<=(double a, const dd_real &b);
+QD_CONSTEXPR bool operator<=(const dd_real &a, const dd_real &b);
 
-QD_API constexpr bool operator<(const dd_real &a, double b);
-QD_API constexpr bool operator<(double a, const dd_real &b);
-QD_API constexpr bool operator<(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR bool operator>=(const dd_real &a, double b);
+QD_CONSTEXPR bool operator>=(double a, const dd_real &b);
+QD_CONSTEXPR bool operator>=(const dd_real &a, const dd_real &b);
 
-QD_API constexpr bool operator>(const dd_real &a, double b);
-QD_API constexpr bool operator>(double a, const dd_real &b);
-QD_API constexpr bool operator>(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR bool operator<(const dd_real &a, double b);
+QD_CONSTEXPR bool operator<(double a, const dd_real &b);
+QD_CONSTEXPR bool operator<(const dd_real &a, const dd_real &b);
 
-QD_API constexpr bool operator!=(const dd_real &a, double b);
-QD_API constexpr bool operator!=(double a, const dd_real &b);
-QD_API constexpr bool operator!=(const dd_real &a, const dd_real &b);
+QD_CONSTEXPR bool operator>(const dd_real &a, double b);
+QD_CONSTEXPR bool operator>(double a, const dd_real &b);
+QD_CONSTEXPR bool operator>(const dd_real &a, const dd_real &b);
+
+QD_CONSTEXPR bool operator!=(const dd_real &a, double b);
+QD_CONSTEXPR bool operator!=(double a, const dd_real &b);
+QD_CONSTEXPR bool operator!=(const dd_real &a, const dd_real &b);
 
 
 /* Round to double */
