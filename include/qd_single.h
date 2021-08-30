@@ -1748,7 +1748,8 @@ QD_CONSTEXPR bool dd_real::isnan() const { return QD_ISNAN(x[0]) || QD_ISNAN(x[1
 QD_CONSTEXPR bool dd_real::isfinite() const { return QD_ISFINITE(x[0]); }
 QD_CONSTEXPR bool dd_real::isinf() const { return QD_ISINF(x[0]); }
 
-#define QD_OP_TAIL(x) if(!std::is_constant_evaluated()) assert(!(x).isnan())
+//#define QD_OP_TAIL(x) if(!std::is_constant_evaluated()) assert(!(x).isnan())
+#define QD_OP_TAIL(x) do { } while(false)
 
 /* Cast to double. */
 inline QD_CONSTEXPR double to_double(const dd_real& a)
