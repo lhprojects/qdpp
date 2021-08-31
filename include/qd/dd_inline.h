@@ -624,8 +624,10 @@ inline constexpr int dd_real::read(const char* s, dd_real& a)
             switch (ch) {
 
             case '.':
-                if (point >= 0)
+                if (point >= 0) {
+                    a = dd_real::_nan;
                     return -1;
+                }
                 point = nd;
                 break;
 
@@ -633,12 +635,14 @@ inline constexpr int dd_real::read(const char* s, dd_real& a)
             case 'e':
                 ++p;
                 if (read_int(p, e) < 0) {
+                    a = dd_real::_nan;
                     return -1;
                 }
                 done = true;
                 break;
 
             default:
+                a = dd_real::_nan;
                 return -1;
             }
         }
@@ -662,8 +666,7 @@ inline constexpr int dd_real::read(const char* s, dd_real& a)
 inline constexpr dd_real dd_real::read(const char* s)
 {
     dd_real a;
-    if (read(s, a) < 0)
-        return dd_real::_nan;
+    read(s, a);
     return a;
 }
 
