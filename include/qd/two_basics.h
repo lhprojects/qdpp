@@ -54,37 +54,32 @@ namespace qd {
 
 
 #ifdef _MSC_VER
+#define QD_USE_MM_FMADD 1
+#elif defined(__GNUC__) || defined(__clang__)
+#if defined(__FMA__) || defined(__FMA4__)
+#define QD_USE_MM_FMADD 1
+#endif
+#endif
 
+#ifdef QD_USE_MM_FMADD
 #include <immintrin.h>
 
     inline double QD_FMA_NOCHECK(double a, double b, double c)
     {
-        __m128d aw;
-        aw.m128d_f64[0] = a;
-        aw.m128d_f64[1] = 0;
-        __m128d bw;
-        bw.m128d_f64[0] = b;
-        bw.m128d_f64[1] = 0;
-        __m128d cw;
-        cw.m128d_f64[0] = c;
-        cw.m128d_f64[1] = 0;
+        __m128d aw = { a, 0 };
+        __m128d bw = { b, 0 };
+        __m128d cw = { c, 0 };
         __m128d answ = _mm_fmadd_sd(aw, bw, cw);
-        return answ.m128d_f64[0];
+        return _mm_cvtsd_f64(answ);
     }
 
     inline double QD_FMS_NOCHECK(double a, double b, double c)
     {
-        __m128d aw;
-        aw.m128d_f64[0] = a;
-        aw.m128d_f64[1] = 0;
-        __m128d bw;
-        bw.m128d_f64[0] = b;
-        bw.m128d_f64[1] = 0;
-        __m128d cw;
-        cw.m128d_f64[0] = c;
-        cw.m128d_f64[1] = 0;
+        __m128d aw = { a, 0 };
+        __m128d bw = { b, 0 };
+        __m128d cw = { c, 0 };
         __m128d answ = _mm_fmsub_sd(aw, bw, cw);
-        return answ.m128d_f64[0];
+        return _mm_cvtsd_f64(answ);
     }
 
 #ifndef QD_FMA
@@ -95,8 +90,7 @@ namespace qd {
 #define QD_FMS QD_FMS_NOCHECK
 #endif
 
-#endif
-
+#endif // #ifdef QD_USE_MM_FMADD
 
     /*********** Basic Functions ************/
     /* Computes fl(a+b) and err(a+b).  Assumes |a| >= |b|. or |a||b| = 0. */
