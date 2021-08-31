@@ -23,10 +23,17 @@
 #include <type_traits>
 #include "qd_config.h"
 
-namespace qd {
+#ifdef _MSC_VER
+#define QD_USE_MM_FMADD 1
+#elif defined(__GNUC__) || defined(__clang__)
+#if defined(__FMA__) || defined(__FMA4__)
+#define QD_USE_MM_FMADD 1
+#endif
+#endif
 
-    inline QD_CONSTEXPR const double _d_nan = std::numeric_limits<double>::quiet_NaN();
-    inline QD_CONSTEXPR const double _d_inf = std::numeric_limits<double>::infinity();
+#ifdef QD_USE_MM_FMADD
+#include <immintrin.h>
+#endif  // #ifdef QD_USE_MM_FMADD
 
 
 #ifdef __GNUC__
@@ -52,17 +59,12 @@ namespace qd {
 #define TWO_CHECK() do {} while(false)
 #endif
 
+namespace qd {
 
-#ifdef _MSC_VER
-#define QD_USE_MM_FMADD 1
-#elif defined(__GNUC__) || defined(__clang__)
-#if defined(__FMA__) || defined(__FMA4__)
-#define QD_USE_MM_FMADD 1
-#endif
-#endif
+    inline QD_CONSTEXPR const double _d_nan = std::numeric_limits<double>::quiet_NaN();
+    inline QD_CONSTEXPR const double _d_inf = std::numeric_limits<double>::infinity();
 
 #ifdef QD_USE_MM_FMADD
-#include <immintrin.h>
 
     inline double QD_FMA_NOCHECK(double a, double b, double c)
     {
