@@ -218,6 +218,15 @@ namespace fb {
         }
     }
 
+    inline constexpr double fabs_(double x)
+    {
+        if (std::is_constant_evaluated()) {
+            return copysign(x, 0);
+        } else {
+            return std::fabs(x);
+        }
+    }
+
     inline constexpr double abs(double x)
     {
         if (std::is_constant_evaluated()) {

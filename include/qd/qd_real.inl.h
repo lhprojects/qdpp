@@ -2466,10 +2466,10 @@ inline QD_CONSTEXPR qd_real fmod(const qd_real &a, const qd_real &b) {
 template<class Gen>
 inline qd_real qdrand(Gen &gen) {
     double const base_f = 1.110223024625156540E-16;
-    double r1 = drand(gen);
-    double r2 = drand(gen) * base_f;
-    double r3 = drand(gen) * (base_f * base_f);
-    double r4 = drand(gen) * (base_f * base_f * base_f);
+    double r1 = drand_fine(gen);
+    double r2 = drand_fine(gen) * base_f;
+    double r3 = drand_fine(gen) * (base_f * base_f);
+    double r4 = drand_fine(gen) * (base_f * base_f * base_f);
     qd::renorm(r1, r2, r3, r4);
     return qd_real(r1, r2, r3, r4);
 }

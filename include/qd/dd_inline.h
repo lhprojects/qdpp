@@ -342,7 +342,6 @@ inline QD_CONSTEXPR dd_real dd_real::accurate_div(const dd_real &a, const dd_rea
   dd_real r;
 
   q1 = a.x[0] / b.x[0];  /* approximate quotient */
-
   r = a - q1 * b;
   
   q2 = r.x[0] / b.x[0];

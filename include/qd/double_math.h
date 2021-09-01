@@ -1199,7 +1199,7 @@ namespace fb {
         double t = x * x;
         double v_ = 0;
 
-        constexpr int max_iters = 26;
+        int max_iters = 26;
         double a = max_iters * 2 + 3;
         double b = max_iters * 2 + 1;
 

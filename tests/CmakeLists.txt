@@ -9,13 +9,34 @@ set (CMAKE_CXX_STANDARD 20)
 set(TICTOK ${CMAKE_CURRENT_SOURCE_DIR}/tictoc.cpp)
 
 add_executable(qd_test_c c_test.c ../src/c_fpu.cpp ../src/c_dd.cpp ../src/c_qd.cpp)
-add_executable(qd_test_more qd_more_test.cpp)
 add_executable(qd_test_huge huge.cpp ${TICTOK})
 add_executable(qd_test_pslq pslq_test.cpp ${TICTOK})
 add_executable(qd_test_qd qd_test.cpp ${TICTOK})
 add_executable(qd_test_quadt quadt_test.cpp ${TICTOK})
 add_executable(qd_test_double_math double_math.cpp)
 add_executable(qd_bench qd_timer.cpp ${TICTOK})
+add_executable(qd_test_more qd_more_test.cpp)
+
+# you may change this line
+set(QD_HAS_MPFR 1)
+
+if(QD_HAS_MPFR)
+
+# you may change this line
+set(QD_MPFR_HOME E:/projects/vcpkg/packages/mpfr_x64-windows)
+set(QD_GMP_HOME E:/projects/vcpkg/packages/gmp_x64-windows)
+
+target_include_directories(qd_test_more PRIVATE  ${QD_MPFR_HOME}/include)
+target_link_directories(qd_test_more PRIVATE  ${QD_MPFR_HOME}/lib)
+target_link_libraries(qd_test_more mpfr)
+
+target_include_directories(qd_test_more PRIVATE  ${QD_GMP_HOME}/include)
+target_link_directories(qd_test_more PRIVATE  ${QD_GMP_HOME}/lib)
+target_link_libraries(qd_test_more gmp)
+
+target_compile_definitions(qd_test_more PRIVATE QD_HAS_MPFR=1)
+else()
+endif()
 
 
 

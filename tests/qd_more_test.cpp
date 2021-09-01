@@ -806,6 +806,8 @@ void test_qd_read()
 void test_nan()
 {
     using namespace qd_literals;
+	1. / dd_real::_inf;
+
     QdAssert((dd_real::_nan + 0.).isnan());
     QdAssert((dd_real::_nan + 0_dd).isnan());
     QdAssert((dd_real::_nan - 0.).isnan());
@@ -834,7 +836,420 @@ void test_nan()
 	QdAssert((0_dd / qd_real::_nan).isnan());
 }
 
+//#include "qd/unused/DecimalFloat.h"
+#ifdef QD_HAS_MPFR
+#include "mpreal.h"
+
+mpfr::mpreal get_mpreal(double r)
+{
+	mpfr::mpreal a(r);
+	return a;
+}
+mpfr::mpreal get_mpreal(dd_real r)
+{
+	mpfr::mpreal a(r.x[0]);
+	a += r.x[1];
+	return a;
+}
+
+mpfr::mpreal get_mpreal(qd_real r)
+{
+	mpfr::mpreal a(r.x[0]);
+	a += r.x[1];
+	a += r.x[2];
+	a += r.x[3];
+	return a;
+}
+
+double get_ups(dd_real r)
+{
+	int a;
+	(void)std::frexp(r.x[0], &a);
+	// 0.1xx... 01yy... 2^a
+	//    52x    52y
+	// thus 1ups = 2^{-1-52-2-52-a} 2^a
+    double v = ldexp(1., -1 - 52 - 2 - 52 + a);
+    return v;
+}
+
+double get_ups(qd_real r)
+{
+	int a;
+	(void)std::frexp(r.x[0], &a);
+	// 0.1xx... 01yy... 01zz... 01ww... 2^a
+	//    52x    52y    52z      52w
+	// thus 1ups = 2^{-1-52-(2+52)*3-a} 2^a
+	double v = ldexp(1., -1 - (52 + 2)*3 - 52 + a);
+	return v;
+}
+
+double get_ups(double r)
+{
+	int a;
+	(void)std::frexp(r, &a);
+	// 0.1xx... 01yy... 01zz... 01ww... 2^a
+	//    52x    52y    52z      52w
+	// thus 1ups = 2^{-1-52-(2+52)*3-a} 2^a
+	double v = ldexp(1., -1 - 52 + a);
+	return v;
+}
+
+template<class Real, bool use_fb = false>
+struct TestAcc {
+
+
+	int64_t iters = 1000;
+	double range = 10;
+	template<class F>
+	void test_accuracy(char const* com, F f)
+	{
+		std::mt19937_64 gen;
+
+		int err_u[100] = {};
+		double err_sum = 0;
+		double err_cnt = 0;
+		double err_max = 0;
+		bool hasnan = false;
+		std::uniform_int_distribution<int> uni(0, 1);
+		for (int64_t i = 0; i < iters; ++i) {
+			Real a = real_rand<Real>(gen) - 0.5;
+			Real b = real_rand<Real>(gen) - 0.5;
+			a = exp(range * a) * (uni(gen) ? 1 : -1);
+			b = exp(range * b) * (uni(gen) ? 1 : -1);
+			Real c = f(a, b);
+			if (isnan(c)) {
+				hasnan = true;
+				continue;
+			}
+			mpfr::mpreal a_ = get_mpreal(a);
+			mpfr::mpreal b_ = get_mpreal(b);
+			mpfr::mpreal c_ = get_mpreal(c);
+			mpfr::mpreal cref = f(a_, b_);
+			mpfr::mpreal err = c_ - cref;
+			double derr = err.toDouble();
+			double ups = get_ups(c);
+			double r = std::abs(derr / ups);
+			if (r < 0.5) {
+				err_u[0] += 1;
+			} else if(r < 1.) {
+				err_u[1] += 1;
+			} else if (r < 2.) {
+				err_u[2] += 1;
+			}
+			err_sum += r;
+			err_cnt += 1;
+			err_max = std::max(err_max, r);
+		}
+		printf("%15s %10.1f %10.1f %10.1f %10.1f %10.1f %10s\n",
+			com,
+			100. * err_u[0] / err_cnt, 100. * err_u[1] / err_cnt,
+			100. * err_u[2] / err_cnt,
+			err_sum / err_cnt, err_max,
+			hasnan ? "Y" : "N");
+	}
+	template<class F>
+	void test_accuracy_uni(char const* com, F f)
+	{
+		std::mt19937_64 gen;
+		// 1000 bits
+		mpfr::mpreal::set_default_prec(1000);
+
+		int err_u[100] = {};
+		double err_sum = 0;
+		double err_cnt = 0;
+		double err_max = 0;
+		bool hasnan = false;
+		std::uniform_int_distribution<int> uni(0, 1);
+		for (int64_t i = 0; i < iters; ++i) {
+			Real a = real_rand<Real>(gen) - 0.5;
+			a = exp(range * a) * (uni(gen) ? 1 : -1);
+			Real c = f(a);
+			if (isnan(c)) {
+				hasnan = true;
+				continue;
+			}
+			mpfr::mpreal a_ = get_mpreal(a);
+			mpfr::mpreal c_ = get_mpreal(c);
+			mpfr::mpreal cref = f(a_);
+			mpfr::mpreal err = c_ - cref;
+			double derr = err.toDouble();
+			double ups = get_ups(c);
+			double r = std::abs(derr / ups);
+			if (r < 0.5) {
+				err_u[0] += 1;
+			} else if (r < 1.) {
+				err_u[1] += 1;
+			} else if (r < 2.) {
+				err_u[2] += 1;
+			}
+			err_sum += r;
+			err_cnt += 1;
+			err_max = std::max(err_max, r);
+		}
+		printf("%15s %10.1f %10.1f %10.1f %10.1f %10.1f %10s\n",
+			com,
+			100. * err_u[0] / err_cnt, 100. * err_u[1] / err_cnt,
+			100. * err_u[2] / err_cnt,
+			err_sum / err_cnt, err_max,
+			hasnan?"Y":"N");
+	}
+
+	TestAcc(double range, int64_t iters)
+	{
+		this->iters = iters;
+		this->range = range;
+
+		printf("Testing %s(use_floating_basic for double %d) [range=%6.1f, iters=%7lld]\n", 
+			sizeof(Real) == sizeof(dd_real) ?
+			"dd_real" : (sizeof(Real) == sizeof(double)? "double": "qd_real"),
+			use_fb,
+			range, (long long)iters);
+		printf("%15s %10s %10s %10s %10s %10s %10s\n",
+			"",
+			"0-0.5ups[%]", "0.5-1ups[%]", "1-2ups[%]", "avg[ups]", "max[ups]",
+			"HasNan");
+
+		test_accuracy("+", [](auto a, auto b) { return a + b; });
+		test_accuracy("-", [](auto a, auto b) { return a - b; });
+		test_accuracy("*", [](auto a, auto b) { return a * b; });
+		test_accuracy("/", [](auto a, auto b) { return a / b; });
+
+		if constexpr (std::is_same_v < Real , dd_real >
+			|| std::is_same_v<Real, qd_real>) {
+			test_accuracy("accurate_div", [](auto a, auto b) {
+				using Type = std::remove_cv_t<decltype(a)>;
+				if constexpr (std::is_same_v<Type, dd_real>
+					|| std::is_same_v<Type, qd_real>) {
+					return Type::accurate_div(a, b);
+				} else {
+					return a / b;
+				}
+				});
+			test_accuracy("sloppy_div", [](auto a, auto b) {
+				using Type = std::remove_cv_t<decltype(a)>;
+				if constexpr (std::is_same_v<Type, dd_real>
+					|| std::is_same_v<Type, qd_real>) {
+					return Type::sloppy_div(a, b);
+				} else {
+					return a / b;
+				}
+				});
+			test_accuracy("ieee_add", [](auto a, auto b) {
+				using Type = std::remove_cv_t<decltype(a)>;
+				if constexpr (std::is_same_v<Type, dd_real>
+					|| std::is_same_v<Type, qd_real>) {
+					return Type::ieee_add(a, b);
+				} else {
+					return a + b;
+				}
+				});
+			test_accuracy("sloppy_add", [](auto a, auto b) {
+				using Type = std::remove_cv_t<decltype(a)>;
+				if constexpr (std::is_same_v<Type, dd_real>
+					|| std::is_same_v<Type, qd_real>) {
+					return Type::sloppy_add(a, b);
+				} else {
+					return a + b;
+				}
+				});
+		}
+
+
+		test_accuracy_uni("abs", [](auto const &a) { 
+            using Type = std::remove_cv_t<decltype(a)>;
+            if constexpr (std::is_same_v<Type, double> && use_fb) {
+                return fb::fabs_(a);
+            }
+            return fabs(a);
+            });
+
+		test_accuracy_uni("floor", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::floor_(a);
+			}
+			return floor(a);
+			});
+		test_accuracy_uni("ceil", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::ceil_(a);
+			}
+			return ceil(a);
+			});
+		test_accuracy_uni("round", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::round_(a);
+			}
+			return round(a);
+			});
+
+		test_accuracy("fmod", [](auto a, auto b) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::fmod_(a, b);
+			}
+			return fmod(a, b);
+			});
+
+
+		test_accuracy_uni("sqrt", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::sqrt_(fb::fabs_(a));
+			}
+			return sqrt(fabs(a));
+			});
+		test_accuracy_uni("exp", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::exp_(a);
+			}
+			return exp(a);
+			});
+		test_accuracy_uni("log", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::log_(fb::fabs_(a));
+			}
+			return log(fabs(a));
+			});
+		test_accuracy_uni("log10", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::log10_(fb::fabs_(a));
+			}
+			return log10(fabs(a));
+			});
+		test_accuracy("pow", [](auto a, auto b) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::pow_(fb::fabs_(a), b);
+			}
+			return pow(abs(a), b);
+			});
+
+
+		test_accuracy_uni("sin", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::sin_(a);
+			}
+			return sin(a);
+			});
+		test_accuracy_uni("cos", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::cos_(a);
+			}
+			return cos(a);
+			});
+		test_accuracy_uni("tan", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::tan_(a);
+			}
+			return tan(a);
+			});
+        test_accuracy_uni("asin", [](auto a) {
+			if (a > 1. || a < -1.) return 0. * a;
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return asin(a);
+			}
+			return asin(a);
+			});
+        test_accuracy_uni("acos", [](auto a) {
+			if (a > 1. || a < -1.) return 0. * a;
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return acos(a);
+			}
+			return acos(a);
+			});
+        test_accuracy_uni("atan", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::atan_(a);
+			}
+			return atan(a);
+			});
+
+		test_accuracy_uni("sinh", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::sinh_(a);
+			}
+			return sinh(a);
+			});
+		test_accuracy_uni("cosh", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return fb::cosh_(a);
+			}
+			return cosh(a);
+			});
+		test_accuracy_uni("tanh", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return tanh(a);
+			}
+			return tanh(a);
+			});
+		test_accuracy_uni("asinh", [](auto a) {
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return asinh(a);
+			}
+			return asinh(a);
+			});
+		test_accuracy_uni("acosh", [](auto a) {
+			if (a < 1.) return 0. * a;
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return acosh(a);
+			}
+			return acosh(a);
+			});
+		test_accuracy_uni("atanh", [](auto a) {
+			if (a > 1. || a < -1.) return 0. * a;
+			using Type = std::remove_cv_t<decltype(a)>;
+			if constexpr (std::is_same_v<Type, double> && use_fb) {
+				return atanh(a);
+			}
+			return atanh(a);
+			});
+    }
+
+};
+void test_accuracy_set()
+{
+#ifdef NDEBUG
+    TestAcc<dd_real>(1, 10'000'000);
+    TestAcc<qd_real>(1, 10'000'000);
+	TestAcc<dd_real>(10, 10'000'000);
+	TestAcc<qd_real>(10, 10'000'000);
+	TestAcc<dd_real>(20, 10'000'000);
+	TestAcc<qd_real>(20, 10'000'000);
+#else
+	mpfr::mpreal::set_default_prec(1500);
+	TestAcc<dd_real, false>(1, 1000);
+	TestAcc<qd_real, false>(1, 1000);
+	TestAcc<double, false>(1, 1000);
+	TestAcc<double, true>(1, 1000);
+#endif
+}
+
+#endif
+
+#include <type_traits>
 int main() {
+
+#ifdef QD_HAS_MPFR
+	test_accuracy_set();
+#endif
+
 	test_dd_read();
 	test_qd_read();
 	test_read();
@@ -855,6 +1270,7 @@ int main() {
 	test_3();
 	test_4();
 	test_5();
+	return (int)bool(nerr);
 	return (int)bool(nerr);
 }
 

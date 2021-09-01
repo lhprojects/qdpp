@@ -1074,8 +1074,8 @@ inline double drand_fine(Gen& gen)
 template<class Gen>
 inline dd_real ddrand(Gen &gen)
 {
-    double r1 = drand(gen);
-    double r2 = drand(gen) * 1.110223024625156540E-16;
+    double r1 = drand_fine(gen);
+    double r2 = drand_fine(gen) * 1.110223024625156540E-16;
     return dd_real::add(r1, r2);
 }
 
