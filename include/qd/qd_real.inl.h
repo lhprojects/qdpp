@@ -165,12 +165,6 @@ inline QD_CONSTEXPR qd_real operator/(const qd_real &a, double b) {
   return qd_real(q0, q1, q2, q3);
 }
 #if 0 //HL:
-inline qd_real::qd_real(const char *s) {
-  if (qd_real::read(s, *this)) {
-    qd_real::error("(qd_real::qd_real): INPUT ERROR.");
-    *this = qd_real::_nan;
-  }
-}
 inline qd_real &qd_real::operator=(const char *s) {
   if (qd_real::read(s, *this)) {
     qd_real::error("(qd_real::operator=): INPUT ERROR.");
@@ -180,11 +174,26 @@ inline qd_real &qd_real::operator=(const char *s) {
 }
 #endif
 
-inline std::istream &operator>>(std::istream &s, qd_real &qd) {
-  char str[255];
-  s >> str;
-  qd_real::read(str, qd);
-  return s;
+inline std::istream& operator>>(std::istream& s, qd_real& qd)
+{
+    using iter_t = std::istreambuf_iterator< std::istream::char_type,
+        std::istream::traits_type>;
+
+    std::istream::sentry ok(s);
+    if (ok) {
+        std::istream::iostate st = s.rdstate();
+        iter_t first(s);
+        iter_t end;
+        if (qd_read(first, end, qd) < 0) {
+            qd = qd_real::_nan;
+            st |= std::istream::failbit;
+        }
+        if (s.peek() == EOF) {
+            st |= std::istream::eofbit;
+        }
+        s.setstate(st);
+    }
+    return s;
 }
 
 inline std::ostream &operator<<(std::ostream &os, const qd_real &qd) {
@@ -196,77 +205,9 @@ inline std::ostream &operator<<(std::ostream &os, const qd_real &qd) {
 
 /* Read a quad-double from s. */
 inline QD_CONSTEXPR int qd_real::read(const char *s, qd_real &qd) {
-  const char *p = s;
-  char ch;
-  int sign = 0;
-  int point = -1;  /* location of decimal point */
-  int nd = 0;      /* number of digits read */
-  int e = 0;       /* exponent. */
-  bool done = false;
-  qd_real r = 0.0;  /* number being read */
-
-  /* Skip any leading spaces */
-  while (*p == ' ') p++;
-
-  while (!done && (ch = *p) != '\0') {
-    if (ch >= '0' && ch <= '9') {
-		if(point>=0 && nd>200) { //HL: workaround and can't deal all cases very well
-		} else {
-			/* It's a digit */
-			int d = ch - '0';
-			r *= 10.0;
-			r += static_cast<double>(d);
-			nd++;
-		}
-    } else {
-      /* Non-digit */
-      switch (ch) {
-      case '.':
-        if (point >= 0)
-          return -1;   /* we've already encountered a decimal point. */
-        point = nd;
-        break;
-      case '-':
-      case '+':
-        if (sign != 0 || nd > 0)
-          return -1;  /* we've already encountered a sign, or if its
-                            not at first position. */
-        sign = (ch == '-') ? -1 : 1;
-        break;
-      case 'E':
-      case 'e':
-          ++p;
-          if (read_int(p, e) < 0) {
-              return -1;
-          }
-          done = true;
-          break;
-      case ' ':
-        done = true;
-        break;
-      default:
-        return -1;
-      
-      }
-    }
-
-    p++;
-  }
-
-
-
-  /* Adjust exponent to account for decimal point */
-  if (point >= 0) {
-    e -= (nd - point);
-  }
-
-  /* Multiply the the exponent */
-  if (e != 0) {
-    r *= (qd_real(10.0) ^ e);
-  }
-
-  qd = (sign < 0) ? -r : r;
-  return 0;
+    std::char_traits<char> traits;
+    size_t len = traits.length(s);
+    return qd_read(s, s + len, qd);
 }
 
 inline QD_CONSTEXPR qd_real qd_real::read(const char* s)

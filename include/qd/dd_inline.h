@@ -589,85 +589,141 @@ inline constexpr int to_int(const dd_real& a)
     return static_cast<int>(a.x[0]);
 }
 
-/* Reads in a double-double number from the string s. */
-inline constexpr int dd_real::read(const char* s, dd_real& a)
+template<class It1, class It2, class Real>
+inline QD_CONSTEXPR int qd_read(It1 first,
+    It2 end,
+    Real& md)
 {
-    const char* p = s;
-    char ch;
     int sign = 0;
-    int point = -1;
-    int nd = 0;
-    int e = 0;
+    int point = -1;  /* location of decimal point */
+    int nd = 0;      /* number of digits read */
+    int32_t e = 0;       /* exponent. */
+    int64_t e64 = 0;
+    bool e_sign = false;
     bool done = false;
-    dd_real r = 0.0;
+    bool has_int = false;
+    bool has_frac = false;
+    Real r = 0.0;  /* number being read */
 
     /* Skip any leading spaces */
-    while (*p == ' ')
-        p++;
-
-    if (*p == '-') {
-        sign = -1;
-        ++p;
-    } else if (*p == '+') {
-        sign = 1;
-        ++p;
+    for (; !(done = (first == end)) && *first == ' '; ++first) {
     }
 
-    while (!done && (ch = *p) != '\0') {
+    // done set
+    if (!done && *first == '-') {
+        ++first;
+        sign = -1;
+    }
+
+    for (; !(done = first == end); ++first) {
+        char ch = *first;
         if (ch >= '0' && ch <= '9') {
             int d = ch - '0';
             r *= 10.0;
-            r += static_cast<double>(d);
+            r += (double)d;
             nd++;
+            has_int = true;
         } else {
+            break;
+        }
+    }
+    if (!done && *first == '.') {
+        ++first;
+        point = nd;
 
-            switch (ch) {
-
-            case '.':
-                if (point >= 0) {
-                    a = dd_real::_nan;
-                    return -1;
+        for (; !(done = first == end); ++first) {
+            char ch = *first;
+            if (ch >= '0' && ch <= '9') {
+                // too many digits, will reduce accuracy
+                if (nd <= sizeof(Real) / sizeof(double) * 19) {
+                    int d = ch - '0';
+                    r *= 10.0;
+                    r += (double)d;
+                    nd++;
                 }
-                point = nd;
+                has_frac = true;
+            } else {
                 break;
-
-            case 'E':
-            case 'e':
-                ++p;
-                if (read_int(p, e) < 0) {
-                    a = dd_real::_nan;
-                    return -1;
-                }
-                done = true;
-                break;
-
-            default:
-                a = dd_real::_nan;
-                return -1;
             }
         }
-
-        p++;
+    }
+    if (!has_int && !has_frac) {
+        return -1;
     }
 
+    if (!done && (*first == 'e' || *first == 'E')) {
+        ++first;
+
+        e64 = 0;
+        e_sign = false;
+        done = first == end;
+        if (!done && *first == '+') {
+            ++first;
+        } else if (!done && *first == '-') {
+            ++first;
+            e_sign = true;
+        }
+
+        bool has_exp = false;
+        for (; !(done = first == end); ++first) {
+            char ch = *first;
+            if (ch >= '0' && ch <= '9') {
+                has_exp = true;
+                int d = ch - '0';
+                e64 *= 10;
+                e64 += d;
+                if (e64 > (int64_t(INT32_MAX) + e_sign)) {
+                    // overflow
+                    for (; !(first == end); ++first) {
+                        char ch = *first;
+                        if (!(ch >= '0' && ch <= '9')) {
+                            break;
+                        }
+                    }
+                    return -1;
+                }
+            } else {
+                break;
+            }
+        }
+        if (!has_exp) {
+            return -1;
+        }
+    }
+
+
+    if (e_sign) e = -e64;
+    else e = e64;
+
+    /* Adjust exponent to account for decimal point */
     if (point >= 0) {
         e -= (nd - point);
     }
 
+    /* Multiply the the exponent */
     if (e != 0) {
-        r *= (dd_real(10.0) ^ e);
+        r *= (Real(10.0) ^ e);
     }
 
-    a = (sign == -1) ? -r : r;
+    md = (sign < 0) ? -r : r;
     return 0;
+}
 
+/* Reads in a double-double number from the string s. */
+inline constexpr int dd_real::read(const char* s, dd_real& a)
+{
+    std::char_traits<char> traits;
+    size_t len = traits.length(s);
+    return qd_read(s, s + len, a);
 }
 
 inline constexpr dd_real dd_real::read(const char* s)
 {
-    dd_real a;
-    read(s, a);
-    return a;
+    dd_real u;
+    if (dd_real::read(s, u) < 0) {
+        return dd_real::_nan;
+    }
+    return u;
 }
 
 

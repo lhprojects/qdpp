@@ -1,12 +1,14 @@
 ﻿
 #include <stdio.h>
 #include <stdint.h>
-#include <qd/dd_real.h>
+#include <qd/dd.h>
 #include <qd/qd_real.h>
 #include <qd/dd_math.h>
 #include <qd/special_functions.h>
 #include <iostream>
 #include <cmath>
+#include <sstream>
+
 
 int nerr = 0;
 #define QdAssert(x) do {\
@@ -607,8 +609,204 @@ void test_read()
 	QdAssert(1_qd == 1.);
 	QdAssert(1._dd == 1.);
 }
+
+void test_dd_read()
+{
+	{
+        using namespace qd_literals;
+        std::stringstream ss("1.1E333");
+        double a = 1;
+        ss >> a;
+        QdAssert(a == 0. && ss.eof() && ss.fail());
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("1.1E-333");
+		double a = 1;
+		ss >> a;
+		QdAssert(a == 0. && ss.eof() && ss.fail());
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("a");
+		std::string v;
+		ss >> v;
+		double a = 1;
+		ss >> a;
+		QdAssert(a == 1. && ss.eof() && ss.fail());
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("a");
+		double a = 1;
+		ss >> a;
+		QdAssert(a == 0. && ss.fail());
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss(" a");
+		double a = 1;
+		ss >> a;
+		QdAssert(a == 0. && ss.fail());
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss(" ");
+		double a = 1;
+		ss >> a;
+		// check sentry failed
+		QdAssert(a == 1. && ss.eof() && ss.fail());
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss(".E");
+		double a;
+		ss >> a;
+		QdAssert(!ss.eof() && ss.fail());
+		ss.clear();
+		QdAssert(ss.peek() == 'E');
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("1.1E1111111111111a");
+		double a;
+		ss >> a;
+		QdAssert(!ss.eof() && ss.fail());
+		ss.clear();
+		QdAssert(ss.peek() == 'a');
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("1.1a");
+		dd_real a;
+		ss >> a;
+		QdAssert(!a.isnan() && (ss.peek() == 'a') && abs(a / 1.1 - 1) < 0.0001);
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("11E-1");
+		dd_real a;
+		ss >> a;
+		QdAssert(!a.isnan() && !ss.fail() && ss.eof() && abs(a / 1.1 - 1) < 0.0001);
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("0.11E+1");
+		dd_real a;
+		ss >> a;
+		QdAssert(!a.isnan() && !ss.fail() && ss.eof() && abs(a / 1.1 - 1) < 0.0001);
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("0.11E+1111111111111111111111111111111111");
+		dd_real a;
+		ss >> a;
+		QdAssert(a.isnan() && ss.fail() && ss.eof());
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("0.11E+1111111111111111111111111111111111a");
+		dd_real a;
+		ss >> a;
+		QdAssert(a.isnan() && ss.fail() && !ss.eof());
+		ss.clear();
+		QdAssert(ss.peek() == 'a');
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("-0.11E1");
+		dd_real a;
+		ss >> a;
+		bool ssf = ss.fail();
+		QdAssert(!a.isnan() && !ss.fail() && ss.eof() && abs(a / -1.1 - 1) < 0.0001);
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss(" 1 1");
+		dd_real a;
+		ss >> a;
+		bool ssf = ss.fail();
+		QdAssert(!a.isnan() && !ss.fail() && (ss.peek() == ' ') && abs(a - 1) < 0.0001);
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss(".E");
+		dd_real a;
+		ss >> a;
+		QdAssert(!ss.eof() && ss.fail());
+		ss.clear();
+		QdAssert(ss.peek() == 'E');
+	}
+	{
+		std::stringstream ss("1 2 3");
+		dd_real a, b, c;
+		ss >> a >> b >> c;
+		QdAssert(a == 1 && b == 2 && c == 3 && ss.eof());
+
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss(" ");
+		dd_real a = 1;
+		ss >> a;
+		// check sentry failed
+		QdAssert(a == 1. && ss.eof() && ss.fail());
+	}
+}
+
+void test_qd_read()
+{
+
+	{
+		using namespace qd_literals;
+		std::stringstream ss("1.1a");
+		qd_real a;
+		ss >> a;
+		QdAssert(!a.isnan() && (ss.peek() == 'a') && abs(a / 1.1 - 1) < 0.0001);
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("11E-1");
+		qd_real a;
+		ss >> a;
+		QdAssert(!a.isnan() && !ss.fail() && ss.eof() && abs(a / 1.1 - 1) < 0.0001);
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("0.11E+1");
+		qd_real a;
+		ss >> a;
+		QdAssert(!a.isnan() && !ss.fail() && ss.eof() && abs(a / 1.1 - 1) < 0.0001);
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("0.11E+1111111111111111111111111111111111");
+		qd_real a;
+		ss >> a;
+		QdAssert(a.isnan() && ss.fail() && ss.eof());
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss("-0.11E1");
+		qd_real a;
+		ss >> a;
+		bool ssf = ss.fail();
+		QdAssert(!a.isnan() && !ss.fail() && ss.eof() && abs(a / -1.1 - 1) < 0.0001);
+	}
+	{
+		using namespace qd_literals;
+		std::stringstream ss(" 1 1");
+		qd_real a;
+		ss >> a;
+		bool ssf = ss.fail();
+		QdAssert(!a.isnan() && !ss.fail() && (ss.peek() == ' ') && abs(a - 1) < 0.0001);
+	}
+}
+
 int main() {
 
+	test_dd_read();
+	test_qd_read();
 	test_constexpr();
 	test_constexpr_qd();
 	test_read();

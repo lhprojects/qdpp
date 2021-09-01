@@ -22,11 +22,29 @@ inline std::ostream& operator<<(std::ostream& os, const dd_real& dd)
 }
 
 /* Reads in the double-double number a. */
-inline std::istream& operator>>(std::istream& s, dd_real& a)
+// 1. Skip the whitespaces. if the input stream become empty,
+// keep the dd unchanged, and failbit and eofbit are set for stream
+// 2. Parse the input stream, if failed, failbit will be set and
+//    dd will be set to nan. If reach the EOF, eofbit will be set.
+inline std::istream& operator>>(std::istream& s, dd_real& dd)
 {
-    char str[255];
-    s >> str;
-    dd_real::read(str, a);
+    using iter_t = std::istreambuf_iterator< std::istream::char_type,
+        std::istream::traits_type>;
+
+    std::istream::sentry ok(s);
+    if (ok) {
+        std::istream::iostate st = s.rdstate();
+        iter_t first(s);
+        iter_t end;
+        if (qd_read(first, end, dd) < 0) {
+            dd = dd_real::_nan;
+            st |= std::istream::failbit;
+        }
+        if (s.peek() == EOF) {
+            st |= std::istream::eofbit;
+        }
+        s.setstate(st);
+    }
     return s;
 }
 
