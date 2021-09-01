@@ -1196,27 +1196,28 @@ namespace fb {
     inline constexpr double atan_Taylor(double x)
     {
         // x - x^3/3 + x^5/5
+        // x(1- 1/3 x^2 (1 - 3/5 x^2 (1 - 5/7 x^2)))
         double t = x * x;
         double v_ = 0;
 
         int max_iters = 26;
-        double a = max_iters * 2 + 3;
-        double b = max_iters * 2 + 1;
+        double a = double(max_iters) * 2 - 1;
+        double b = double(max_iters) * 2 + 1;
 
         for (int i = 0; i < max_iters; ++i) {
             // v_ = v - 1
-            v_ = (1. + v_) * a / b * t;
+            v_ = -(1. + v_) * a / b * t;
             a -= 2.;
             b -= 2.;
         }
 
-        return x * (1 + v_);
+        return x * (1. + v_);
     }
 
     inline constexpr double atan_(double x)
     {
         // tan(x - y) = (tanx - tany)/(1 + tanx tany)
-        // x = tx + arctan((tx-ty£©/(1+txty))
+        // x = y + arctan((tx-ty£©/(1+txty))
         // arctan(x) = pi/2 - arctan(1/x)
         // 
         // arctan(0) = 0
@@ -1249,8 +1250,8 @@ namespace fb {
         double v = 0;
         double low = 1;
         size_t idx = 0;
-        for (size_t i = 0; i < std::size(phi_table); ++i) {
-            if (fb::abs_(phi_table[i] - x) < low) {
+        for (size_t i = 0; i < std::size(tan_table); ++i) {
+            if (fb::abs_(tan_table[i] - x) < low) {
                 low = fb::abs_(phi_table[i] - x);
                 idx = i;
             }
@@ -1262,6 +1263,9 @@ namespace fb {
 
         double r = atan_talbe[idx] + arctan_ratio;
 
+        if (inverse) {
+            r = _d_half_pi - r;
+        }
 
         if (sign) return -r;
         else return r;

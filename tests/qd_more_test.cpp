@@ -940,7 +940,7 @@ struct TestAcc {
 			err_cnt += 1;
 			err_max = std::max(err_max, r);
 		}
-		printf("%15s %10.1f %10.1f %10.1f %10.1f %10.1f %10s\n",
+		printf("%15s %10.1f %10.1f %10.1f %10.1f %10.2f %10s\n",
 			com,
 			100. * err_u[0] / err_cnt, 100. * err_u[1] / err_cnt,
 			100. * err_u[2] / err_cnt,
@@ -986,12 +986,12 @@ struct TestAcc {
 			err_cnt += 1;
 			err_max = std::max(err_max, r);
 		}
-		printf("%15s %10.1f %10.1f %10.1f %10.1f %10.1f %10s\n",
+		printf("%15s %10.1f %10.1f %10.1f %10.1f %10.2f %10s\n",
 			com,
 			100. * err_u[0] / err_cnt, 100. * err_u[1] / err_cnt,
 			100. * err_u[2] / err_cnt,
 			err_sum / err_cnt, err_max,
-			hasnan?"Y":"N");
+			hasnan ? "Y" : "N");
 	}
 
 	TestAcc(double range, int64_t iters)
@@ -1234,10 +1234,10 @@ void test_accuracy_set()
 	TestAcc<qd_real>(20, 10'000'000);
 #else
 	mpfr::mpreal::set_default_prec(1500);
+	TestAcc<double, true>(1, 1000);
 	TestAcc<dd_real, false>(1, 1000);
 	TestAcc<qd_real, false>(1, 1000);
 	TestAcc<double, false>(1, 1000);
-	TestAcc<double, true>(1, 1000);
 #endif
 }
 
