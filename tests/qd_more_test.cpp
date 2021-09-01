@@ -803,13 +803,45 @@ void test_qd_read()
 	}
 }
 
-int main() {
+void test_nan()
+{
+    using namespace qd_literals;
+    QdAssert((dd_real::_nan + 0.).isnan());
+    QdAssert((dd_real::_nan + 0_dd).isnan());
+    QdAssert((dd_real::_nan - 0.).isnan());
+    QdAssert((dd_real::_nan - 0_dd).isnan());
+    QdAssert((dd_real::_nan * 0.).isnan());
+    QdAssert((dd_real::_nan * 0_dd).isnan());
+    QdAssert((dd_real::_nan / 0.).isnan());
+    QdAssert((dd_real::_nan / 0_dd).isnan());
+    QdAssert((0. / dd_real::_nan).isnan());
+    QdAssert((0_dd / dd_real::_nan).isnan());
 
+	QdAssert((qd_real::_nan + 0.).isnan());
+	QdAssert((qd_real::_nan + 0_dd).isnan());
+	QdAssert((qd_real::_nan + 0_qd).isnan());
+	QdAssert((qd_real::_nan - 0.).isnan());
+	QdAssert((qd_real::_nan - 0_dd).isnan());
+	QdAssert((qd_real::_nan - 0_qd).isnan());
+	QdAssert((qd_real::_nan * 0.).isnan());
+	QdAssert((qd_real::_nan * 0_dd).isnan());
+	QdAssert((qd_real::_nan * 0_qd).isnan());
+	QdAssert((qd_real::_nan / 0.).isnan());
+	QdAssert((qd_real::_nan / 0_dd).isnan());
+	QdAssert((qd_real::_nan / 0_qd).isnan());
+	QdAssert((0. / qd_real::_nan).isnan());
+	QdAssert((0_qd / qd_real::_nan).isnan());
+	QdAssert((0_dd / qd_real::_nan).isnan());
+}
+
+int main() {
 	test_dd_read();
 	test_qd_read();
+	test_read();
 	test_constexpr();
 	test_constexpr_qd();
-	test_read();
+
+	test_nan();
 
 	test_drand();
 	test_ddrand();

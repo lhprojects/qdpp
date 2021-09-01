@@ -712,8 +712,7 @@ inline QD_CONSTEXPR int qd_read(It1 first,
 /* Reads in a double-double number from the string s. */
 inline constexpr int dd_real::read(const char* s, dd_real& a)
 {
-    std::char_traits<char> traits;
-    size_t len = traits.length(s);
+    size_t len = std::char_traits<char>::length(s);
     return qd_read(s, s + len, a);
 }
 
