@@ -910,6 +910,7 @@ struct TestAcc {
 		double err_cnt = 0;
 		double err_max = 0;
 		double a_max = 0;
+		double b_max = 0;
 		bool hasnan = false;
 		std::uniform_int_distribution<int> uni(0, 1);
 		for (int64_t i = 0; i < iters; ++i) {
@@ -941,16 +942,17 @@ struct TestAcc {
 			err_sum += r;
 			err_cnt += 1;
 			if (r > err_max) {
-				a_max = to_double(b);
+				a_max = to_double(a);
+				b_max = to_double(b);
 			}
 			err_max = std::max(err_max, r);
 		}
-		printf("%15s %10.1f %10.1f %10.1f %10.1f %10.2f(%10.2E) %10s\n",
+		printf("%15s %12.1f %12.1f %12.1f %12.1f %12.2f(%10.2E,%10.2E) %12s\n",
 			com,
 			100. * err_u[0] / err_cnt, 100. * err_u[1] / err_cnt,
 			100. * err_u[2] / err_cnt,
 			err_sum / err_cnt,
-			err_max, a_max,
+			err_max, a_max, b_max,
 			hasnan ? "Y" : "N");
 	}
 	template<class F>
@@ -989,7 +991,7 @@ struct TestAcc {
 				err_u[1] += 1;
 			} else if (r < 2.) {
 				err_u[2] += 1;
-			} else if(com == std::string("exp") && r > 10) {
+			} else if(com == std::string("cos") && r > 100) {
 				err_u[3] += 1;
 				Real c = f(a);
 			}
@@ -1000,8 +1002,8 @@ struct TestAcc {
 			}
 			err_max = std::max(err_max, r);
 		}
-        printf("%15s %10.1f %10.1f %10.1f %10.1f %10.2f(%10.2E) %10s\n",
-            com,
+		printf("%15s %12.1f %12.1f %12.1f %12.1f %12.2f(%21.2E) %12s\n",
+			com,
             100. * err_u[0] / err_cnt, 100. * err_u[1] / err_cnt,
             100. * err_u[2] / err_cnt,
             err_sum / err_cnt,
@@ -1020,10 +1022,10 @@ struct TestAcc {
 			use_fb ? "(fb::*)" : "",
 			exp(-0.5*range), exp(0.5 * range),
 			(long long)iters);
-		printf("%15s %10s %10s %10s %10s %10s(%10s) %10s\n",
+		printf("%15s %12s %12s %12s %12s %12s(%21s) %12s\n",
 			"",
 			"0-0.5ups[%]", "0.5-1ups[%]", "1-2ups[%]", "avg[ups]",
-			"max[ups]", "x",
+			"max[ups]", "x(,y)",
 			"HasNan");
 
 		test_accuracy("+", [](auto a, auto b) { return a + b; });
@@ -1131,11 +1133,12 @@ struct TestAcc {
 
 
 		test_accuracy_uni("sqrt", [](auto a) {
+			if (a < 0.) return 0. * a;
 			using Type = std::remove_cv_t<decltype(a)>;
 			if constexpr (std::is_same_v<Type, double> && use_fb) {
 				return fb::sqrt_(fb::fabs_(a));
 			}
-			return sqrt(fabs(a));
+			return sqrt(a);
 			});
 		test_accuracy_uni("exp", [](auto a) {
 			if (fabs(a) > 600.) return 0 * a;
@@ -1146,26 +1149,29 @@ struct TestAcc {
 			return exp(a);
 			});
 		test_accuracy_uni("log", [](auto a) {
+			if (a < 0.) return 0. * a;
 			using Type = std::remove_cv_t<decltype(a)>;
 			if constexpr (std::is_same_v<Type, double> && use_fb) {
 				return fb::log_(fb::fabs_(a));
 			}
-			return log(fabs(a));
+			return log(a);
 			});
 		test_accuracy_uni("log10", [](auto a) {
+			if (a < 0.) return 0. * a;
 			using Type = std::remove_cv_t<decltype(a)>;
 			if constexpr (std::is_same_v<Type, double> && use_fb) {
 				return fb::log10_(fb::fabs_(a));
 			}
-			return log10(fabs(a));
+			return log10(a);
 			});
 		test_accuracy("pow", [](auto a, auto b) {
-            if (abs(log(abs(a)) / fb::_d_ln2 * b) > 1000) return 0. * a;
+			if (a < 0.) return 0. * a;
+			if (abs(log(abs(a)) / fb::_d_ln2 * b) > 900) return 0. * a;
 			using Type = std::remove_cv_t<decltype(a)>;
 			if constexpr (std::is_same_v<Type, double> && use_fb) {
 				return fb::pow_(fb::fabs_(a), b);
 			}
-			return pow(abs(a), b);
+			return pow(a, b);
 			});
 
 

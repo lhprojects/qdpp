@@ -508,8 +508,10 @@ inline QD_CONSTEXPR dd_real sin(const dd_real &a) {
   double q = fb::round(r.x[0] / dd_real::_pi2.x[0]);
   t = r - dd_real::_pi2 * q;
   int j = static_cast<int>(q);
+
   q = fb::round(t.x[0] / _pi16.x[0]);
   t -= _pi16 * q;
+
   int k = static_cast<int>(q);
   int abs_k = fb::abs(k);
 

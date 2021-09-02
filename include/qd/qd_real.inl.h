@@ -704,7 +704,6 @@ inline QD_CONSTEXPR qd_real sqrt(const qd_real &a) {
      number of correct digits, we only need to perform it 
      twice.
   */
-
   if (a.is_zero())
     return 0.0;
 
@@ -712,15 +711,41 @@ inline QD_CONSTEXPR qd_real sqrt(const qd_real &a) {
     return qd_real::_nan;
   }
 
-  qd_real r = (1.0 / fb::sqrt(a[0]));
-  qd_real h = mul_pwr2(a, 0.5);
+#if 0
+  if (a.x[0] > 0.75 && a.x[0] < 1.25) {
+    // when a is close 1
+    //  dx' = dx + (1 - (ea+1) * (1+dx)^2) * x / 2;
+    //  dx' = dx - (ea * x^2 + dx(1+x)) * x / 2;
+    //  (1+dx)(1+ea)=1+dx+ea+dx*ea
+    // so how to calculate 1/sqrt(1+ea)?
+    // exp(log(1/sqrt(1+ea))) = exp(-0.5 log1p(ea))
+    // 1+expm1(-0.5 log1p(ea))
+     
+      qd_real ea = a - 1.;
+      qd_real x;
+      qd_real dx = fb::expm1(-0.5 * fb::log1p(a.x[0] - 1.));
+      x = 1. + dx;
+      dx = dx - (ea * sqr(x) + dx * (1. + x)) * mul_pwr2(x, 0.5);
+      x = 1. + dx;
+      dx = dx - (ea * sqr(x) + dx * (1. + x)) * mul_pwr2(x, 0.5);
+      x = 1. + dx;
+      dx = dx - (ea * sqr(x) + dx * (1. + x)) * mul_pwr2(x, 0.5);
 
-  r += ((0.5 - h * sqr(r)) * r);
-  r += ((0.5 - h * sqr(r)) * r);
-  r += ((0.5 - h * sqr(r)) * r);
+      return 1. + dx + ea + dx * ea;
 
-  r *= a;
-  return r;
+  } else
+#endif
+  {
+      qd_real r = (1.0 / fb::sqrt(a[0]));
+      qd_real h = mul_pwr2(a, 0.5);
+
+      r += ((0.5 - h * sqr(r)) * r);
+      r += ((0.5 - h * sqr(r)) * r);
+      r += ((0.5 - h * sqr(r)) * r);
+
+      r *= a;
+      return r;
+  }
 }
 
 
@@ -2044,7 +2069,7 @@ inline QD_CONSTEXPR void sincos_taylor(const qd_real &a,
   } while (i < n_inv_fact_qd && fb::abs(to_double(t)) > thresh);
 
   sin_a = s;
-  cos_a = sqrt(1.0 - sqr(s));
+  cos_a = sqrt(1 - sqr(s));
 }
 
 inline QD_CONSTEXPR qd_real sin_taylor(const qd_real &a) {
@@ -2190,8 +2215,11 @@ inline QD_CONSTEXPR qd_real cos(const qd_real &a) {
   double q = fb::round(r.x[0] / qd_real::_pi2.x[0]);
   qd_real t = r - qd_real::_pi2 * q;
   int j = static_cast<int>(q);
+  
+  // we need to estimate precisely
   q = fb::round(t.x[0] / _pi1024.x[0]);
   t -= _pi1024 * q;
+
   int k = static_cast<int>(q);
   int abs_k = fb::abs(k);
 
@@ -2444,7 +2472,8 @@ inline QD_CONSTEXPR qd_real asin(const qd_real &a) {
     return (a.is_positive()) ? qd_real::_pi2 : -qd_real::_pi2;
   }
 
-  return atan2(a, sqrt(1.0 - sqr(a)));
+  qd_real sq = sqrt((1. - a) * (1. + a));
+  return atan2(a, sq);
 }
 
 inline QD_CONSTEXPR qd_real acos(const qd_real &a) {
@@ -2459,7 +2488,8 @@ inline QD_CONSTEXPR qd_real acos(const qd_real &a) {
     return (a.is_positive()) ? qd_real(0.0) : qd_real::_pi;
   }
 
-  return atan2(sqrt(1.0 - sqr(a)), a);
+  qd_real sq = sqrt((1. - a) * (1. + a));
+  return atan2(sq, a);
 }
  
 inline QD_CONSTEXPR qd_real sinh(const qd_real &a) {

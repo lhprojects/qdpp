@@ -1035,6 +1035,15 @@ namespace fb {
         return to_double(expm1_(dd_real(a)));
     }
 
+    inline constexpr double expm1(double a) noexcept
+    {
+        if (std::is_constant_evaluated()) {
+            return expm1_(a);
+        } else {
+            return std::expm1(a);
+        }
+    }
+
     inline constexpr dd_real pow_(dd_real base, dd_real n)
     {
         // b^n = e^{ln(b)n}
