@@ -786,66 +786,148 @@ inline QD_CONSTEXPR const qd_real inv_fact[n_inv_fact_qd] = {
   qd_real( 2.81145725434552060e-15,  1.65088427308614326e-31,
           -2.87777179307447918e-50,  4.27110689256293549e-67)
 };
+inline QD_CONSTEXPR qd_real expn_tab_qd[] = {
+qd_real(2.71828182845904509080E+00,1.44564689172925015783E-16,-2.12771710803817676452E-33,1.51563015984121914376E-49),
+qd_real(7.38905609893065040694E+00,-1.79711394978391483333E-16,8.26843055513995719208E-33,-5.22436809314754310464E-49),
+qd_real(5.45981500331442362040E+01,2.87415780158441149725E-15,1.70031042468970366170E-31,9.94727116330437388111E-48),
+qd_real(2.98095798704172830185E+03,-2.71032958168736330162E-14,-1.13722316302203788822E-30,-5.13484119488010605534E-47),
+qd_real(8.88611052050787210464E+06,5.32118248350156400432E-10,4.99187201515822423815E-26,2.69042513914857018836E-42),
+qd_real(7.89629601826806875000E+13,7.66097802263510790910E-03,3.15120339631862143821E-19,-1.25927975019276480475E-35),
+qd_real(6.23514908081161674391E+27,1.38997388724928466797E+11,2.94795639184623575635E-06,4.35666686915267689099E-23),
+qd_real(3.88770840599459482143E+55,2.70796611036621685030E+39,8.40107669353579046502E+22,5.83986572968418337405E+06),
+qd_real(1.51142766500410352771E+111,1.48059891676144569992E+94,-3.83262454244028672641E+77,1.75465275509441593993E+61),
+qd_real(2.28441358653975650489E+222,1.35492249440234442263E+206,7.35146088862839873664E+189,2.38930087200480514460E+173), };
+inline QD_CONSTEXPR qd_real expn_inv_tab_qd[] = {
+qd_real(3.67879441171442334024E-01,-1.24287536727883625847E-17,-5.83004485107274200441E-34,-2.82679778490174357295E-50),
+qd_real(1.35335283236612702318E-01,-1.04238142328866898838E-17,-5.45511837120813923647E-34,6.79453789589608879943E-51),
+qd_real(1.83156388887341786686E-02,1.62506889942713985216E-18,-8.95575054984530467779E-35,-5.86086490488047820863E-52),
+qd_real(3.35462627902511853224E-04,-1.44021825104257951948E-20,-6.62166752050918090779E-37,2.61785670930435965995E-53),
+qd_real(1.12535174719259116458E-07,-1.94396212385793011861E-24,-5.46719813676998428454E-41,4.99293494768142517518E-57),
+qd_real(1.26641655490941755372E-14,1.85890796267480905359E-31,-1.05339384941604602970E-47,-3.90828948112967453329E-64),
+qd_real(1.60381089054863792659E-28,-7.36132522128421421118E-45,-3.06169097202605116621E-61,-1.27784567741354333376E-77),
+qd_real(2.57220937264241481170E-56,1.51363675530534789420E-73,7.55510564744278475671E-90,-3.16773992880600978012E-106),
+qd_real(6.61626105670948527686E-112,-1.58342892691157677006E-129,-5.87559719875411928259E-147,-2.93479606186896165775E-163),
+qd_real(4.37749103705305118351E-223,2.70607983022862282398E-239,8.72703940202781206644E-256,-1.02006547821792538305E-272),
+};
 
-inline QD_CONSTEXPR qd_real exp(const qd_real &a) {
-  /* Strategy:  We first reduce the size of x by noting that
-     
-          exp(kr + m * log(2)) = 2^m * exp(r)^k
-
-     where m and k are integers.  By choosing m appropriately
-     we can make |kr| <= log(2) / 2 = 0.347.  Then exp(r) is 
-     evaluated using the familiar Taylor series.  Reducing the 
-     argument substantially speeds up the convergence.       */  
-
-  QD_CONSTEXPR double k = fb::ldexp(1.0, 16);
-  const double inv_k = 1.0 / k;
-
-  if (a[0] <= -709.0)
-    return 0.0;
-
-  if (a[0] >=  709.0)
-    return qd_real::_inf;
-
-  if (a.is_zero())
-    return 1.0;
-
-  if (a.is_one())
-    return qd_real::_e;
-
-  double m = fb::round(a.x[0] / qd_real::_log2.x[0]);
-  qd_real r = mul_pwr2(a - qd_real::_log2 * m, inv_k);
-  qd_real s, p, t;
-  double thresh = inv_k * qd_real::_eps;
-
-  p = sqr(r);
-  s = r + mul_pwr2(p, 0.5);
-  int i = 0;
-  do {
-    p *= r;
-    t = p * inv_fact[i++];
-    s += t;
-  } while (fb::abs(to_double(t)) > thresh && i < 9);
-
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s += 1.0;
-  return ldexp(s, static_cast<int>(m));
+inline QD_CONSTEXPR qd_real exp_integer_qd(int a)
+{
+    qd_real f = 1.;
+    if (a > 0) {
+        for (int i = 0; i < 10 && a; ++i) {
+            if (a & 1) {
+                f *= expn_tab_qd[i];
+            }
+            a >>= 1;
+        }
+    } else {
+        a = -a;
+        for (int i = 0; i < 10 && a; ++i) {
+            if (a & 1) {
+                f *= expn_inv_tab_qd[i];
+            }
+            a >>= 1;
+        }
+    }
+    return f;
 }
 
+/* Exponential.  Computes exp(x) in quad-double precision. */
+inline QD_CONSTEXPR qd_real exp_general(const qd_real& a,
+    bool sub_one)
+{
+
+    const double k = 512.0;
+    const double inv_k = 1.0 / k;
+
+    qd_real a_ = a;
+    if (a.x[0] >= 709.0)
+        return qd_real::_inf;
+
+    if (a.x[0] <= -709.0)
+        return 0.0;
+
+    if (a.is_zero())
+        return 1.0;
+
+    if (a.is_one())
+        return qd_real::_e;
+
+
+    double a0 = a.x[0];
+    int aint = (int)fb::round(a0);
+    qd_real factor;
+    if (aint) {
+        a_ -= 1. * aint;
+        factor = exp_integer_qd(aint);
+    }
+
+    qd_real r = mul_pwr2(a_, inv_k);
+    qd_real s, t, p;
+
+    p = sqr(r);
+    s = r + mul_pwr2(p, 0.5);
+    p *= r;
+    t = p * inv_fact[0];
+    int i = 0;
+    do {
+        s += t;
+        p *= r;
+        ++i;
+        t = p * inv_fact[i];
+    } while (fb::abs(to_double(t)) > inv_k * qd_real::_eps && i < 15);
+
+    s += t;
+
+    s = mul_pwr2(s, 2.0) + sqr(s);
+    s = mul_pwr2(s, 2.0) + sqr(s);
+    s = mul_pwr2(s, 2.0) + sqr(s);
+    s = mul_pwr2(s, 2.0) + sqr(s);
+    s = mul_pwr2(s, 2.0) + sqr(s);
+    s = mul_pwr2(s, 2.0) + sqr(s);
+    s = mul_pwr2(s, 2.0) + sqr(s);
+    s = mul_pwr2(s, 2.0) + sqr(s);
+    s = mul_pwr2(s, 2.0) + sqr(s);
+
+    if (sub_one) {
+        if (aint == 0) {
+            return s;
+        } else {
+            return (1. + s) * factor - 1.;
+        }
+    } else {
+        s += 1.0;
+        if (aint == 0) {
+            return s;
+        } else {
+            return s * factor;
+        }
+    }
+}
+
+inline QD_CONSTEXPR qd_real exp(const qd_real& a)
+{
+    return exp_general(a, false);
+}
+inline QD_CONSTEXPR qd_real expm1(const qd_real& a)
+{
+    return exp_general(a, true);
+}
+
+inline QD_CONSTEXPR qd_real log1p_smallfrac(const qd_real& frac)
+{
+    qd_real a_1 = frac;
+    qd_real expm1_;
+
+    qd_real x = fb::log1p(frac.x[0]);   /* Initial approximation */
+    expm1_ = expm1(x);
+    x = x + (a_1 - expm1_) / (1. + expm1_);
+    expm1_ = expm1(x);
+    x = x + (a_1 - expm1_) / (1. + expm1_);
+    expm1_ = expm1(x);
+    x = x + (a_1 - expm1_) / (1. + expm1_);
+    return x;
+}
 /* Logarithm.  Computes log(x) in quad-double precision.
    This is a natural logarithm (i.e., base e).            */
 inline QD_CONSTEXPR qd_real log(const qd_real &a) {
@@ -878,13 +960,24 @@ inline QD_CONSTEXPR qd_real log(const qd_real &a) {
     return -qd_real::_inf;
   }
 
-  qd_real x = fb::log(a[0]);   /* Initial approximation */
+  if (fb::abs(a.x[0] - 1.) < 0.5) {
+      return log1p_smallfrac(a - 1.);
+  } else {
+      qd_real x = fb::log(a.x[0]);   /* Initial approximation */
+      x = x + a * exp(-x) - 1.0;
+      x = x + a * exp(-x) - 1.0;
+      x = x + a * exp(-x) - 1.0;
+      return x;
+  }
+}
 
-  x = x + a * exp(-x) - 1.0;
-  x = x + a * exp(-x) - 1.0;
-  x = x + a * exp(-x) - 1.0;
-
-  return x;
+inline QD_CONSTEXPR qd_real log1p(const qd_real& a)
+{
+    if (fb::abs(a.x[0]) < 0.5) {
+        return log1p_smallfrac(a);
+    } else {
+        return log(1. + a);
+    }
 }
 
 inline QD_CONSTEXPR qd_real log10(const qd_real &a) {
@@ -2370,32 +2463,20 @@ inline QD_CONSTEXPR qd_real acos(const qd_real &a) {
 }
  
 inline QD_CONSTEXPR qd_real sinh(const qd_real &a) {
-  if (a.is_zero()) {
-    return 0.0;
-  }
+    if (a.is_zero()) {
+        return 0.0;
+    }
 
-  if (abs(a) > 0.05) {
-    qd_real ea = exp(a);
-    return mul_pwr2(ea - inv(ea), 0.5);
-  }
-
-  /* Since a is small, using the above formula gives
-     a lot of cancellation.   So use Taylor series. */
-  qd_real s = a;
-  qd_real t = a;
-  qd_real r = sqr(t);
-  double m = 1.0;
-  double thresh = fb::abs(to_double(a) * qd_real::_eps);
-
-  do {
-    m += 2.0;
-    t *= r;
-    t /= (m-1) * m;
-
-    s += t;
-  } while (abs(t) > thresh);
-
-  return s;
+    if (abs(a) > 0.5) {
+        // exp(a) - exp(-a)
+        qd_real ea = exp(a);
+        return mul_pwr2(ea - inv(ea), 0.5);
+    } else {
+        qd_real ea = expm1(a);
+        // 1 + ea - 1/(1+ea)
+        // ea(2+ea)/(1+ea)
+        return mul_pwr2(ea * (2. + ea) / (1. + ea), 0.5);
+    }
 }
 
 inline QD_CONSTEXPR qd_real cosh(const qd_real &a) {
@@ -2408,20 +2489,25 @@ inline QD_CONSTEXPR qd_real cosh(const qd_real &a) {
 }
 
 inline QD_CONSTEXPR qd_real tanh(const qd_real &a) {
-  if (a.is_zero()) {
-    return 0.0;
-  }
+    if (a.is_zero()) {
+        return 0.0;
+    }
 
-  if (fb::abs(to_double(a)) > 0.05) {
-    qd_real ea = exp(a);
-    qd_real inv_ea = inv(ea);
-    return (ea - inv_ea) / (ea + inv_ea);
-  } else {
-    qd_real s, c;
-    s = sinh(a);
-    c = sqrt(1.0 + sqr(s));
-    return s / c;
-  }
+    if (a.x[0] >= 0.5) {
+        // (1 - exp(-2a))/(1+exp(-2a))
+        // 1-... = 2 exp(-2a)/(1+exp(-2a))
+        qd_real ea = exp(-mul_pwr2(a, 2));
+        return 1. - mul_pwr2(ea, 2) / (1 + ea);
+    } else if (a.x[0] <= -0.5) {
+        qd_real ea = exp(mul_pwr2(a, 2));
+        return -1. + mul_pwr2(ea, 2) / (1 + ea);
+    } else {
+        // (exp(x) - exp(-x))/(exp(x) + exp(-x))
+        // (ea + 1 - 1/(1 + ea))/(ea + 1 + 1/(1+ea))
+        // ea*(2 + ea)/(1+sqr(1+ea))
+        qd_real ea = expm1(a);
+        return ea * (2. + ea) / (1. + sqr(1. + ea));
+    }
 }
 
 inline QD_CONSTEXPR void sincosh(const qd_real &a, qd_real &s, qd_real &c) {
@@ -2437,7 +2523,19 @@ inline QD_CONSTEXPR void sincosh(const qd_real &a, qd_real &s, qd_real &c) {
 }
 
 inline QD_CONSTEXPR qd_real asinh(const qd_real &a) {
-  return log(a + sqrt(sqr(a) + 1.0));
+    qd_real a2 = sqr(a);
+    qd_real r = a2 + 1.0;
+    if (a2 <= 0.25) {
+        if (a >= 0.)
+            return log1p(a + a2 / (1. + sqrt(r)));
+        else
+            return -log1p(-a + a2 / (1. + sqrt(r)));
+    } else {
+        if (a >= 0.)
+            return log(a + sqrt(r));
+        else
+            return -log(-a + sqrt(r));
+    }
 }
 
 inline QD_CONSTEXPR qd_real acosh(const qd_real &a) {
@@ -2446,16 +2544,28 @@ inline QD_CONSTEXPR qd_real acosh(const qd_real &a) {
     return qd_real::_nan;
   }
 
-  return log(a + sqrt(sqr(a) - 1.0));
+  if (a.x[0] < 1.25) {
+      qd_real a_ = a - 1.;
+      qd_real q = a_ * (a + 1.);
+      qd_real sq = sqrt(q);
+      return log1p(a_ + sq);
+  } else {
+      qd_real sq = sqrt((a - 1.) * (a + 1.));
+      return log(a + sq);
+  }
 }
 
 inline QD_CONSTEXPR qd_real atanh(const qd_real &a) {
-  if (abs(a) >= 1.0) {
-    //qd_real::error("(qd_real::atanh): Argument out of domain.");
-    return qd_real::_nan;
-  }
-
-  return mul_pwr2(log((1.0 + a) / (1.0 - a)), 0.5);
+    if (abs(a) >= 1.0) {
+        return qd_real::_nan;
+    }
+    if (abs(a) < 0.25) {
+        // (1.0 + a) / (1.0 - a) = 1 + r_
+        qd_real r_ = mul_pwr2(a, 2.) / (1.0 - a);
+        return mul_pwr2(log1p(r_), 0.5);
+    } else {
+        return mul_pwr2(log((1.0 + a) / (1.0 - a)), 0.5);
+    }
 }
 
 inline QD_CONSTEXPR qd_real fmod(const qd_real &a, const qd_real &b) {

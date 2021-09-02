@@ -190,6 +190,8 @@ inline QD_CONSTEXPR dd_real pow(const dd_real &a, int n) {
   return npwr(a, n);
 }
 
+// a^b
+// = exp(b log(a)) = exp(b log1p(a_))
 inline QD_CONSTEXPR dd_real pow(const dd_real &a, const dd_real &b) {
   return exp(b * log(a));
 }
@@ -240,7 +242,7 @@ dd_real(2.57220937264241481170E-56,1.51363675530534789420E-73),
 dd_real(6.61626105670948527686E-112,-1.58342892691157677006E-129),
 dd_real(4.37749103705305118351E-223,2.70607983022862282398E-239),
 };
-inline QD_CONSTEXPR dd_real exp_integer(int a)
+inline QD_CONSTEXPR dd_real exp_integer_dd(int a)
 {
     dd_real f = 1.;
     if (a > 0) {
@@ -288,7 +290,7 @@ inline QD_CONSTEXPR dd_real exp_general(const dd_real &a, bool sub_one) {
   if (aint) {
       a0 -= aint;
       a_.x[0] = qd::quick_two_sum(a0, a_.x[1], a_.x[1]);
-      factor = exp_integer(aint);
+      factor = exp_integer_dd(aint);
   }
 
   dd_real r = mul_pwr2(a_, inv_k);
@@ -392,8 +394,7 @@ inline QD_CONSTEXPR dd_real log(const dd_real &a) {
 
 inline QD_CONSTEXPR dd_real log1p(const dd_real& a)
 {
-    dd_real aabs = fabs(a);
-    if (aabs < 0.5) {
+    if (fb::abs(a.x[0]) < 0.5) {
         return log1p_smallfrac(a);
     } else {
         return log(1. + a);

@@ -941,7 +941,7 @@ struct TestAcc {
 			err_sum += r;
 			err_cnt += 1;
 			if (r > err_max) {
-				a_max = to_double(a);
+				a_max = to_double(b);
 			}
 			err_max = std::max(err_max, r);
 		}
@@ -989,7 +989,7 @@ struct TestAcc {
 				err_u[1] += 1;
 			} else if (r < 2.) {
 				err_u[2] += 1;
-			} else if(com == std::string("tanh") && r > 10) {
+			} else if(com == std::string("exp") && r > 10) {
 				err_u[3] += 1;
 				Real c = f(a);
 			}
@@ -1014,14 +1014,14 @@ struct TestAcc {
 		this->iters = iters;
 		this->range = range;
 
-		printf("Testing %s%s [range=+-[%6.1E,%6.1E], iters=%7lld]\n", 
+		printf("%s%s range=+-[%6.1E,%6.1E], iters=%7lld\n", 
 			sizeof(Real) == sizeof(dd_real) ?
 			"dd_real" : (sizeof(Real) == sizeof(double)? "double": "qd_real"),
 			use_fb ? "(fb::*)" : "",
 			exp(-0.5*range), exp(0.5 * range),
 			(long long)iters);
 		printf("%15s %10s %10s %10s %10s %10s(%10s) %10s\n",
-			"-",
+			"",
 			"0-0.5ups[%]", "0.5-1ups[%]", "1-2ups[%]", "avg[ups]",
 			"max[ups]", "x",
 			"HasNan");
@@ -1290,28 +1290,32 @@ void test_accuracy_set()
 	}
 
 	mpfr::mpreal::set_default_prec(500);
-	int n = 1'000;
+	int64_t n = 1'000;
 #ifdef NDEBUG
-	n = 10'000'000;
+	n = 1'000'000;
 #endif
 
-	int f = 100;
+	int64_t f = 1;
 
-	TestAcc<double, true>(30, 1000 * f);
-	TestAcc<double, true>(1, 1000 * f);
-	TestAcc<double, true>(10, 1000 * f);
-	TestAcc<double, true>(20, 1000 * f);
+    TestAcc<qd_real, false>(0.1, n * f);
+    TestAcc<qd_real, false>(1, n * f);
+    TestAcc<qd_real, false>(10, n * f);
+    TestAcc<qd_real, false>(20, n * f);
 
-	TestAcc<dd_real, false>(0.1, 1000*f);
-	TestAcc<dd_real, false>(1, 1000 * f);
-	TestAcc<dd_real, false>(10, 1000 * f);
-	TestAcc<dd_real, false>(20, 1000 * f);
+    TestAcc<double, true>(30, n * f);
+    TestAcc<double, true>(1, n * f);
+    TestAcc<double, true>(10, n * f);
+    TestAcc<double, true>(20, n * f);
 
-	TestAcc<qd_real, false>(1, 1000 * f);
-	TestAcc<double, false>(1, 1000 * f);
+    TestAcc<dd_real, false>(0.1, n * f);
+    TestAcc<dd_real, false>(1, n * f);
+    TestAcc<dd_real, false>(10, n * f);
+    TestAcc<dd_real, false>(20, n * f);
 
-	TestAcc<qd_real, false>(10, 1000 * f);
-	TestAcc<double, false>(10, 1000 * f);
+    TestAcc<double, false>(0.1, n * f);
+    TestAcc<double, false>(1, n * f);
+    TestAcc<double, false>(10, n * f);
+    TestAcc<double, false>(20, n * f);
 }
 
 #endif
