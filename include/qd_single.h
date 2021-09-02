@@ -323,7 +323,7 @@ struct dd_real {
 
   QD_CONSTEXPR dd_real &operator=(double a);
 
-  QD_CONSTEXPR dd_real operator^(int n);
+  QD_CONSTEXPR dd_real operator^(int n) const;
   QD_CONSTEXPR static dd_real sqr(double d);
 
   QD_CONSTEXPR static dd_real sqrt(double a);
@@ -712,7 +712,7 @@ namespace fb {
     inline constexpr double _d_two = 2.0;
     //                               0.69314718055994528622676398299518041312694549560546875
     inline constexpr double _d_ln2 = 0.6931471805599453094172321214581765680755001343602552541206800094;
-    inline constexpr double _d_ln2_t1 = 2.319046813846299615494855463875478650E-17;
+
     inline constexpr double _d_ln3 = 1.0986122886681096913952452369225257046474905578227494517346943336;
     inline constexpr double _d_ln4 = 1.3862943611198906188344642429163531361510002687205105082413600189;
     inline constexpr double _d_ln5 = 1.6094379124341003746007593332261876395256013542685177219126478914;
@@ -894,6 +894,15 @@ namespace fb {
         }
     }
 
+    inline constexpr double fabs_(double x)
+    {
+        if (std::is_constant_evaluated()) {
+            return copysign(x, 0);
+        } else {
+            return std::fabs(x);
+        }
+    }
+
     inline constexpr double abs(double x)
     {
         if (std::is_constant_evaluated()) {
@@ -923,6 +932,7 @@ namespace fb {
     {
         return d * d;
     }
+
 
     inline constexpr double floor__(double d)
     {
@@ -1753,6 +1763,25 @@ inline QD_CONSTEXPR double to_double(const dd_real& a)
     return a.x[0];
 }
 
+inline constexpr dd_real floor(const dd_real& a)
+{
+    double hi = fb::floor(a.x[0]);
+    double lo = 0.0;
+
+    if (hi == a.x[0]) {
+        /* High word is integer already.  Round the low word. */
+        lo = fb::floor(a.x[1]);
+        hi = qd::quick_two_sum(hi, lo, lo);
+    }
+
+    return dd_real(hi, lo);
+}
+
+inline QD_CONSTEXPR dd_real ldexp(const dd_real& a, int exp)
+{
+    return dd_real(fb::ldexp(a.x[0], exp), fb::ldexp(a.x[1], exp));
+}
+
 /*********** Additions ************/
 /* double-double = double + double */
 inline QD_CONSTEXPR dd_real dd_real::add(double a, double b) {
@@ -2063,7 +2092,6 @@ inline QD_CONSTEXPR dd_real dd_real::accurate_div(const dd_real &a, const dd_rea
   dd_real r;
 
   q1 = a.x[0] / b.x[0];  /* approximate quotient */
-
   r = a - q1 * b;
   
   q2 = r.x[0] / b.x[0];
@@ -2165,7 +2193,7 @@ inline QD_CONSTEXPR dd_real npwr(const dd_real& a, int n)
 
 
 /********** Exponentiation **********/
-inline constexpr dd_real dd_real::operator^(int n) {
+inline constexpr dd_real dd_real::operator^(int n) const {
   return npwr(*this, n);
 }
 
@@ -2433,8 +2461,7 @@ inline QD_CONSTEXPR int qd_read(It1 first,
 /* Reads in a double-double number from the string s. */
 inline constexpr int dd_real::read(const char* s, dd_real& a)
 {
-    std::char_traits<char> traits;
-    size_t len = traits.length(s);
+    size_t len = std::char_traits<char>::length(s);
     return qd_read(s, s + len, a);
 }
 
@@ -2625,6 +2652,28 @@ inline void print_double_info(std::ostream &os, double x) {
 
 
 namespace fb {
+    namespace detail {
+        using namespace qd_literals;
+        inline constexpr dd_real _dd_ln2 = 0.6931471805599453094172321214581765680755001343602552541206800094_dd;
+        inline constexpr dd_real _dd_ln10 = 2.3025850929940456840179914546843642076011014886287729760333279009_dd;
+        inline constexpr dd_real _dd_half_pi = 1.5707963267948966192313216916397514420985846996875529104874722961_dd;
+        inline constexpr dd_real _dd_pi = 3.1415926535897932384626433832795028841971693993751058209749445923_dd;
+
+        inline constexpr dd_real sqrt_(const dd_real& a)
+        {
+            if (a.is_zero())
+                return a;
+            double x = 1.0 / fb::sqrt_(a.x[0]);
+            double ax = a.x[0] * x;
+            return dd_real::add(ax, (a - dd_real::sqr(ax)).x[0] * (x * 0.5));
+        }
+
+        inline constexpr dd_real sqr_(dd_real d)
+        {
+            return d * d;
+        }
+
+    }
 
 #if 0
     inline constexpr double fma__(double a, double b, double c) noexcept
@@ -2730,48 +2779,53 @@ namespace fb {
         return make_double(v, exp, 0);
     }
 
-    inline constexpr double log1p_Taylor(double x)
+    inline constexpr dd_real log1p_Taylor(dd_real x)
     {
-        double x_frac = x;
-        double z1 = x_frac;
-        double z2 = 2. + x_frac;
-        double z3 = z1 / z2;
-        double z6 = sqr_(z3);
+        using namespace detail;
+        dd_real x_frac = x;
+        dd_real z1 = x_frac;
+        dd_real z2 = 2. + x_frac;
+        dd_real z3 = z1 / z2;
+        dd_real z6 = sqr_(z3);
 
 
-        double t = 0;
-        t = t * z6 + 1 / 13.;
-        t = t * z6 + 1 / 11;
-        t = t * z6 + 1 / 9.;
-        t = t * z6 + 1 / 7.;
-        t = t * z6 + 1 / 5.;
-        t = t * z6 + 1 / 3.;
-        t = t * z6 + 1 / 1.;
+        dd_real t = 0;
+        t = t * z6 + 1 / dd_real(19.);
+        t = t * z6 + 1 / dd_real(17.);
+        t = t * z6 + 1 / dd_real(15.);
+        t = t * z6 + 1 / dd_real(13.);
+        t = t * z6 + 1 / dd_real(11.);
+        t = t * z6 + 1 / dd_real(9.);
+        t = t * z6 + 1 / dd_real(7.);
+        t = t * z6 + 1 / dd_real(5.);
+        t = t * z6 + 1 / dd_real(3.);
+        t = t * z6 + 1 / dd_real(1.);
 
-        double r = 2 * z3 * t;
+        dd_real r = 2 * z3 * t;
         return r;
     }
 
     //0.5 <= x < 1
-    inline constexpr double log1p_2(double x)
+    inline constexpr dd_real log1p_2(dd_real x)
     {
-        constexpr double _d_ln_1d5 = 0.4054651081081643819780131154643491365719904234624941976140143241;
+        using namespace qd_literals;
+        constexpr dd_real _d_ln_1d5 = 0.4054651081081643819780131154643491365719904234624941976140143241_dd;
 
-        constexpr double _d_ln_table[] = {
-            0.4054651081081643819780131154643491365719904234624941976140143241,
-            0.2231435513142097557662950903098345033746010855480072136712878724,
-             0.1177830356563834545387941094705217050684807125647331411073486387,
-             0.0606246218164348425806061320404202632862024751447237708145176999,
-             0.0307716586667536883710282075967721640916967399588903563498619953,
-             0.0155041865359652541508540460424468358778684928671933136076133451,
-             0.0077821404420549489474629000611367636781258021825180880816195321,
-             0.0038986404156573230139373430958429070107237541049028050776797502,
-             0.0019512201312617494396740495318415385003497255250798866559231518,
-             0.0009760859730554588959608249080171866726118343337845362377585982,
+        constexpr dd_real _d_ln_table[] = {
+            0.4054651081081643819780131154643491365719904234624941976140143241_dd,
+            0.2231435513142097557662950903098345033746010855480072136712878724_dd,
+             0.1177830356563834545387941094705217050684807125647331411073486387_dd,
+             0.0606246218164348425806061320404202632862024751447237708145176999_dd,
+             0.0307716586667536883710282075967721640916967399588903563498619953_dd,
+             0.0155041865359652541508540460424468358778684928671933136076133451_dd,
+             0.0077821404420549489474629000611367636781258021825180880816195321_dd,
+             0.0038986404156573230139373430958429070107237541049028050776797502_dd,
+             0.0019512201312617494396740495318415385003497255250798866559231518_dd,
+             0.0009760859730554588959608249080171866726118343337845362377585982_dd,
         };
 
-        double lnx_ = 0.;
-        double x_frac = x;
+        dd_real lnx_ = 0.;
+        dd_real x_frac = x;
 
         if (x_frac > 0) {
             if (x_frac >= 0.5) {
@@ -2796,7 +2850,7 @@ namespace fb {
                 frac_test /= 2;
             }
 
-            double t2 = 0;
+            dd_real t2 = 0;
             for (size_t i = std::size(_d_ln_table) - 1; i >= 1; --i) {
                 t2 += _d_ln_table_v[i] ? _d_ln_table[i] : 0;
             }
@@ -2806,13 +2860,13 @@ namespace fb {
 
             bool _d_ln_table_v[std::size(_d_ln_table)] = {};
 
-            double frac_test = 0.5;
+            dd_real frac_test = 0.5;
             for (size_t i = 0; i < std::size(_d_ln_table); ++i) {
 
                 // 0 > x >= -test;
                 // (1+x)*(1+frac_test) - 1
                 // x + (1+ frac_test) * x
-                double x2 = frac_test + (1 + frac_test) * x_frac;
+                dd_real x2 = frac_test + (1 + frac_test) * x_frac;
                 // x2 = frac_test + x + frac_test*x
                 // x2 >= frac_test - frac_test - frac_test*frac_test
                 // x2 >= - frac_test*frac_test >= -0.5 frac_test
@@ -2823,19 +2877,42 @@ namespace fb {
                 frac_test /= 2;
             }
 
-            double t2 = 0;
+            dd_real t2 = 0;
             for (size_t i = std::size(_d_ln_table); i >= 1; --i) {
                 t2 += _d_ln_table_v[i - 1] ? _d_ln_table[i - 1] : 0;
             }
             lnx_ -= t2;
         }
 
-        double fix = log1p_Taylor(x_frac);
+        dd_real fix = log1p_Taylor(x_frac);
         lnx_ += fix;
 
         return lnx_;
     }
 
+    inline constexpr dd_real log_(dd_real x)
+    {
+        //positive finite
+
+        if (x >= 0.5 && x < 2.) {
+            return log1p_2(dd_real(x) - 1.);
+        } else {
+            int exp_;
+            (void)frexp_(x.x[0], &exp_);
+            dd_real x_ = ldexp(x, -exp_);
+            x_ *= 2.;
+            exp_ -= 1;
+
+            // x = x_ 2^exp_ 
+            // 1. <= x_ < 2
+            // log(x) = exp_ * log(x_)
+            // log(x) = log(x_) + exp_*log(2)
+
+            dd_real r = log1p_2(x_ - 1.);
+            r += exp_ * detail::_dd_ln2;
+            return r;
+        }
+    }
 
     inline constexpr double log_(double x)
     {
@@ -2851,25 +2928,7 @@ namespace fb {
             return x;
         } else {
             //positive finite
-
-            if (x >= 0.5 && x < 2.) {
-                return log1p_2(x - 1);
-            } else {
-                int exp_;
-                double x_ = frexp_(x, &exp_);
-                x_ *= 2.;
-                exp_ -= 1;
-
-                // x = x_ 2^exp_ 
-                // 1. <= x_ < 2
-                // log(x) = exp_ * log(x_)
-                // log(x) = log(x_) + exp_*log(2)
-
-                double r = log1p_2(x_ - 1.);
-                r += exp_ * _d_ln2;
-                return r;
-
-            }
+            return to_double(log_(dd_real(x)));
         }
     }
 
@@ -2882,6 +2941,18 @@ namespace fb {
         }
     }
 
+    inline constexpr dd_real log1p_(dd_real x)
+    {
+        //positive finite
+
+        if (x < -0.5) {
+            return log_(1. + x);
+        } else if (x > 1.) {
+            return log_(1. + x);
+        } else {
+            return log1p_2(x);
+        }
+    }
     inline constexpr double log1p_(double x)
     {
         if (isnan_(x)) {
@@ -2895,13 +2966,7 @@ namespace fb {
         } else {
             //positive finite
 
-            if (x < -0.5) {
-                return log_(1. + x);
-            } else if (x > 1.) {
-                return log_(1. + x);
-            } else {
-                return log1p_2(x);
-            }
+            return to_double(log1p_(x));
         }
     }
 
@@ -2914,36 +2979,23 @@ namespace fb {
         }
     }
 
+    inline constexpr dd_real log10_(dd_real x) noexcept
+    {
+        return log_(x) / detail::_dd_ln10;
+    }
+
     inline constexpr double log10_(double x) noexcept
     {
-        return log_(x) / _d_ln10;
+        return to_double(log10_(dd_real(x)));
     }
 
     inline constexpr double log2_(double x) noexcept
     {
         int a;
         double x_ = frexp_(x, &a);
-        return log(x_) / _d_ln2 + a;
+        return to_double(log_(dd_real(x_)) / detail::_dd_ln2 + a);
     }
-#if 0
-    inline bool self_add_car(uint64_t& a, uint64_t b)
-    {
-        a += b;
-        return a < b;
-    }
-    bool get_double(uint64_t bits, uint64_t remain, double& r)
-    {
-        int lb = leading_bit(bits);
-        if (lb >= 0) {
-            uint64_t ur = bits << (52 - lb);
-            ur |= (remain >> 12) + lb;
-            r = ldexp(double(ur), -53 + lb);
-            return true;
-        } else {
-            return false;
-        }
-    }
-#endif
+
 
     // a mod pi/2
     inline constexpr dd_real mod_pio2_dd(double a, int& n)
@@ -3262,6 +3314,28 @@ namespace fb {
         return v;
     }
 
+    inline constexpr dd_real cos_(dd_real x)
+    {
+        // finite
+        int n;
+        dd_real a = mod_pio2_dd(x.x[0], n);
+        dd_real v = 0.;
+        switch (n) {
+        case 0:
+            v = cos_can(a);
+            break;
+        case 1:
+            v = -sin_can(a);
+            break;
+        case 2:
+            v = -cos_can(a);
+            break;
+        case 3:
+            v = sin_can(a);
+            break;
+        }
+        return v;
+    }
     inline constexpr double cos_(double x)
     {
         if (x == 0. || isnan_(x)) {
@@ -3270,26 +3344,34 @@ namespace fb {
             return _d_nan;
         } else {
             // finite
-            int n;
-            double a = mod_pio2(x, n);
-            double v = 0.;
-            switch (n) {
-            case 0:
-                v = to_double(cos_can(a));
-                break;
-            case 1:
-                v = -to_double(sin_can(a));
-                break;
-            case 2:
-                v = -to_double(cos_can(a));
-                break;
-            case 3:
-                v = to_double(sin_can(a));
-                break;
-            }
-            return v;
+            return to_double(cos_(dd_real(x)));
         }
     }
+
+    inline constexpr dd_real sin_(dd_real x)
+    {
+        // finite
+        int n;
+        dd_real a = mod_pio2_dd(x.x[0], n);
+        dd_real v = 0.;
+        switch (n) {
+        case 0:
+            v = sin_can(a);
+            break;
+        case 1:
+            v = cos_can(a);
+            break;
+        case 2:
+            v = -sin_can(a);
+            break;
+        case 3:
+            v = -cos_can(a);
+            break;
+        }
+        return v;
+
+    }
+
     inline constexpr double sin_(double x)
     {
         if (x == 0. || isnan_(x)) {
@@ -3298,27 +3380,7 @@ namespace fb {
             return _d_nan;
         } else {
             // finite
-
-            int n;
-            double a = mod_pio2(x, n);
-            double v = 0.;
-            switch (n) {
-            case 0:
-                v = to_double(sin_can(a));
-                break;
-            case 1:
-                v = to_double(cos_can(a));
-                break;
-            case 2:
-                v = -to_double(sin_can(a));
-                break;
-            case 3:
-                v = -to_double(cos_can(a));
-                break;
-            }
-            return v;
-
-
+            return to_double(sin_(dd_real(x)));
         }
     }
 
@@ -3340,6 +3402,30 @@ namespace fb {
         }
     }
 
+    inline constexpr dd_real tan_(dd_real x) noexcept
+    {
+        // finite
+
+        int n;
+        dd_real a = mod_pio2_dd(x.x[0], n);
+        dd_real v = 0.;
+        switch (n) {
+        case 0:
+            v = sin_can(a) / cos_can(a);
+            break;
+        case 1:
+            v = -cos_can(a) / sin_can(a);
+            break;
+        case 2:
+            v = sin_can(a) / cos_can(a);
+            break;
+        case 3:
+            v = -cos_can(a) / sin_can(a);
+            break;
+        }
+        return v;
+    }
+
     inline constexpr double tan_(double x) noexcept
     {
         if (x == 0. || isnan_(x)) {
@@ -3348,27 +3434,7 @@ namespace fb {
             return _d_nan;
         } else {
             // finite
-
-            int n;
-            double a = mod_pio2(x, n);
-            double v = 0.;
-            switch (n) {
-            case 0:
-                v = to_double(sin_can(a) / cos_can(a));
-                break;
-            case 1:
-                v = -to_double(cos_can(a) / sin_can(a));
-                break;
-            case 2:
-                v = to_double(sin_can(a) / cos_can(a));
-                break;
-            case 3:
-                v = -to_double(cos_can(a) / sin_can(a));
-                break;
-            }
-            return v;
-
-
+            return to_double(tan_(dd_real(x)));
         }
     }
 
@@ -3381,206 +3447,185 @@ namespace fb {
         }
     }
 
+
+    inline constexpr dd_real atan_Taylor(dd_real x)
+    {
+        // x - x^3/3 + x^5/5
+        // x(1- 1/3 x^2 (1 - 3/5 x^2 (1 - 5/7 x^2)))
+        dd_real t = x * x;
+        dd_real v_ = 0;
+
+        int max_iters = 26;
+        dd_real a = dd_real(max_iters) * 2 - 1;
+        dd_real b = dd_real(max_iters) * 2 + 1;
+
+        for (int i = 0; i < max_iters; ++i) {
+            // v_ = v - 1
+            v_ = -(1. + v_) * a / b * t;
+            a -= 2.;
+            b -= 2.;
+        }
+
+        return x * (1. + v_);
+    }
+
+    namespace detail {
+        inline constexpr dd_real atan_(dd_real x)
+        {
+            // tan(x - y) = (tanx - tany)/(1 + tanx tany)
+            // x = y + arctan((tx-ty£©/(1+txty))
+            // arctan(x) = pi/2 - arctan(1/x)
+            // 
+            // arctan(0) = 0
+            // arctan(inf) = pi/2
+
+            bool sign = false;
+            if (x < 0) {
+                sign = true;
+                x = -x;
+            }
+            using namespace qd_literals;
+            constexpr dd_real atan_talbe[] = {
+                0_dd,
+                0.2449786631268641541720824812112758109141440983811840671273759146_dd,
+                0.4636476090008061162142562314612144020285370542861202638109330887_dd,
+                0.6435011087932843868028092287173226380415105911153123828656061187_dd,
+                0.7853981633974483096156608458198757210492923498437764552437361480_dd,
+            };
+
+            constexpr double tan_table[] = {
+                0, 0.25, 0.5, 0.75, 1.0,
+            };
+
+            bool inverse = false;
+            if (x > 1.) {
+                x = 1 / x;
+                inverse = true;
+            }
+
+            dd_real v = 0;
+            dd_real low = 1;
+            size_t idx = 0;
+            for (size_t i = 0; i < std::size(tan_table); ++i) {
+                if (fabs(tan_table[i] - x) < low) {
+                    low = fabs(phi_table[i] - x);
+                    idx = i;
+                }
+            }
+            dd_real t = tan_table[idx];
+            dd_real ratio = (x - t) / (1 + t * x);
+
+            dd_real arctan_ratio = atan_Taylor(ratio);
+
+            dd_real r = atan_talbe[idx] + arctan_ratio;
+
+            if (inverse) {
+                r = _dd_half_pi - r;
+            }
+
+            if (sign) return -r;
+            else return r;
+        }
+    
+        inline constexpr dd_real asin_(dd_real x)
+        {
+            dd_real sq = sqrt_((1. - x) * (1 + x));
+            if (abs(x) < sq) {
+                return atan_(x / sq);
+            } else if(x > 0){
+                return _dd_half_pi - atan_(sq / x);
+            } else {
+                return -_dd_half_pi - atan_(sq / x);
+            }
+        }
+
+        inline constexpr dd_real acos_(dd_real x)
+        {
+            dd_real sq = sqrt_((1. - x) * (1 + x));
+            if (abs(x) < sq) {
+                return _dd_half_pi - atan_(x / sq);
+            } else if (x > 0) {
+                return atan_(sq / x);
+            } else {
+                return _dd_pi + atan_(sq / x);
+            }
+        }
+    }
+
+    inline constexpr double asin_(double x)
+    {
+        return to_double(detail::asin_(dd_real(x)));
+    }
+    inline constexpr double acos_(double x)
+    {
+        return to_double(detail::acos_(dd_real(x)));
+    }
+    inline constexpr double atan_(double x)
+    {
+        return to_double(detail::atan_(dd_real(x)));
+    }
+
+    inline constexpr double atan(double x)
+    {
+        if (std::is_constant_evaluated()) {
+            return atan_(x);
+        } else {
+            return std::atan(x);
+        }
+    }
     // error 3E-7 a^11
-    inline constexpr double expm1_Taylor(double a) noexcept
+    inline constexpr dd_real expm1_Taylor(dd_real a) noexcept
     {
         // x ( 1 + 1/2 x (1 + 1/3 x(1 + 1/4 x)))
-        double v = 1;
-        v = 1 + 1 / 10. * a * v;
-        v = 1 + 1 / 9. * a * v;
-        v = 1 + 1 / 8. * a * v;
-        v = 1 + 1 / 7. * a * v;
-        v = 1 + 1 / 6. * a * v;
-        v = 1 + 1 / 5. * a * v;
-        v = 1 + 1 / 4. * a * v;
-        v = 1 + 1 / 3. * a * v;
-        v = 1 + 1 / 2. * a * v;
+        dd_real v = 1;
+        dd_real f = 11.;
+        int iters = 10;
+        for (int i = 0; i < iters ; ++i) {
+            v = 1. + 1 / f * a * v;
+            f -= 1;
+        }
         v *= a;
         return v;
     }
-
-#define _FB_SPLITTER 134217729.0               // = 2^27 + 1
-#define _FB_SPLIT_THRESH 6.69692879491417e+299 // = 2^996
-
-    inline constexpr void split_double(double a, double& hi, double& lo)
-    {
-        double temp;
-        if (a > _FB_SPLIT_THRESH || a < -_FB_SPLIT_THRESH) {
-            a *= 3.7252902984619140625e-09;  // 2^-28
-            temp = _FB_SPLITTER * a;
-            hi = temp - (temp - a);
-            lo = a - hi;
-            hi *= 268435456.0;          // 2^28
-            lo *= 268435456.0;          // 2^28
-        } else {
-            temp = _FB_SPLITTER * a;
-            hi = temp - (temp - a);
-            lo = a - hi;
-        }
-    }
-
-    /* Computes fl(a+b) and err(a+b).  */
-    inline constexpr double two_sum(double a, double b, double& err)
-    {
-        double s = a + b;
-        double bb = s - a;
-        err = (a - (s - bb)) + (b - bb);
-        return s;
-    }
-
-    /* Computes fl(a*a) and err(a*a).  */
-    inline constexpr double two_sqr(double a, double& err)
-    {
-        double hi, lo;
-        double q = a * a;
-        split_double(a, hi, lo);
-        err = ((hi * hi - q) + 2.0 * hi * lo) + lo * lo;
-        return q;
-    }
-
-    /* Computes fl(a*b) and err(a*b).  */
-    inline constexpr double two_prod(double a, double b, double& err)
-    {
-        double a_hi, a_lo, b_hi, b_lo;
-        double p = a * b;
-        split_double(a, a_hi, a_lo);
-        split_double(b, b_hi, b_lo);
-        err = ((a_hi * b_hi - p) + a_hi * b_lo + a_lo * b_hi) + a_lo * b_lo;
-        return p;
-    }
-
-    struct value_error {
-        double value;
-        double error;
-
-
-        constexpr value_error mul2() const
-        {
-            value_error ans;
-            ans.value = 2 * value;
-            ans.error = 2 * error;
-            return ans;
-        }
-
-    };
 
     constexpr double sqr(double x)
     {
         return x * x;
     }
 
-    constexpr value_error sqr(value_error x)
+    inline constexpr dd_real expm1_n(dd_real a, int& n) noexcept
     {
-        value_error ans;
-        ans.value = two_sqr(x.value, ans.error);
-        ans.error += 2 * x.value * x.error + x.error * x.error;
-        two_sum(ans.value, ans.error, ans.error);
-        return ans;
-    }
-
-    constexpr value_error operator+(value_error x, value_error y)
-    {
-        value_error ans;
-        ans.value = two_sqr(x.value, ans.error);
-        ans.error += 2 * x.value * x.error + x.error * x.error;
-        two_sum(ans.value, ans.error, ans.error);
-        return ans;
-    }
-
-    inline constexpr double expm1_n(double a, int& n, double& err) noexcept
-    {
-        err = 0.;
         // exp(x + n ln2) = exp(x) 2^n
-        double nd = floor_(a / _d_ln2);
-        n = int(nd);
+        dd_real nd = floor(a / detail::_dd_ln2);
+        n = int(nd.x[0]);
+        dd_real x = a - nd * detail::_dd_ln2;
 
-        double p1, p2, p3 = _d_ln2_t1;
-        split_double(_d_ln2, p1, p2);
-        double x = a;
-        double dx1 = 0;
-        double dx2 = 0;
-        x = two_sum(x, n * -p1, dx1);
-        x = two_sum(x, n * -(p2 + p3), dx2);
-        double dx = dx1 + dx2;
-        x = two_sum(x, dx, dx);
-
-
-
-
-#if 0
-        // [0, ln2]
-        // exp(x) = exp(x-a)exp(a) = (1 + expm1(x-a))exp(a)
-        // = exp(a) + expm1(x-a)*exp(a)
-        // don't forget: dx*exp(x-a)exp(a)
-        // make a table, result is more accuracy
-        constexpr double a_table[] = {
-            0 / 16., 1 / 16., 2 / 16., 3 / 16., 4 / 16.,
-        5 / 16., 6 / 16.,7 / 16.,8 / 16.,9 / 16.,10 / 16.,11 / 16. };
-        constexpr double exp_table[] = {
-            1.0,
-            1.0644944589178594295633905946428896731007254436493533015193075106,
-            1.1331484530668263168290072278117938725655031317451816259128200360,
-            1.2062302494209807106555860104464335480403936461999703807388699348,
-            1.2840254166877414840734205680624364583362808652814630892175072968,
-            1.3668379411737963628387567727212086721727332944308111731505954490,
-            1.4549914146182013360537936919875185083468420209644156811952413281,
-            1.5488302986341330979985519845954923375583036629258105734128604976,
-            1.6487212707001281468486507878141635716537761007101480115750793116,
-            1.7550546569602985572440470365989676887382375302457485300516127462,
-            1.8682459574322224065018356201881044531149722837225540862147663759,
-            1.9887374695822918311174773496469253668482551764105723262843912825,
-        };
-        constexpr double expm1_table[] = {
-            0.0,
-            0.0644944589178594295633905946428896731007254436493533015193075106,
-            0.1331484530668263168290072278117938725655031317451816259128200360,
-            0.2062302494209807106555860104464335480403936461999703807388699348,
-            0.2840254166877414840734205680624364583362808652814630892175072968,
-            0.3668379411737963628387567727212086721727332944308111731505954490,
-            0.4549914146182013360537936919875185083468420209644156811952413281,
-            0.5488302986341330979985519845954923375583036629258105734128604976,
-            0.6487212707001281468486507878141635716537761007101480115750793116,
-            0.7550546569602985572440470365989676887382375302457485300516127462,
-            0.8682459574322224065018356201881044531149722837225540862147663759,
-            0.9887374695822918311174773496469253668482551764105723262843912825,
-        };
-        double nd2 = floor_(16 * x);
-        int n2 = (int)nd2;
-        x -= nd2 / 16.;
-        double expm1 = expm1_Taylor(x);
-
-        double err1, err2;
-        double t = two_prod(expm1, exp_table[n2], err1);
-        expm1 = two_sum(expm1_table[n2], t, err2);
-        expm1 = two_sum(expm1, err1 + err2 + dx * (1 + expm1), err);
-#else
         // exp(x + dx) = exp(x)(1+dx)= (1 + expm1)(1+dx)
         // = 1 + expm1 + dx + expm1*dx
         // exp(x/k * k) = exp(x/k)^k
         // expm1 = (1+expm1)^k - 1
         // k = 2: expm1 = 2*expm1 + expm1^2
-
-        double expm1 = expm1_Taylor(x / 16.);
+        dd_real expm1 = expm1_Taylor(x / 16.);
         expm1 = 2 * expm1 + sqr(expm1);
         expm1 = 2 * expm1 + sqr(expm1);
         expm1 = 2 * expm1 + sqr(expm1);
         expm1 = 2 * expm1 + sqr(expm1);
-        err += (1 + expm1) * dx;
-        expm1 = two_sum(expm1, err, err);
-#endif
 
         return expm1;
     }
 
-    inline constexpr double exp_(double a) noexcept
+    inline constexpr dd_real exp_(dd_real a) noexcept
     {
         int n;
-        double err1;
-        double expm1 = expm1_n(a, n, err1);
-        expm1 = expm1 + err1;
-        double expx = 1 + expm1;
-        expx = ldexp_(expx, n);
+        dd_real expm1 = expm1_n(a, n);
+        dd_real expx = 1. + expm1;
+        expx = ldexp(expx, n);
         return expx;
+    }
+
+    inline constexpr double exp_(double a) noexcept
+    {
+        return to_double(exp_(dd_real(a)));
     }
 
     inline constexpr double exp(double a) noexcept
@@ -3617,30 +3662,35 @@ namespace fb {
         }
     }
 
-    inline constexpr double expm1_(double a) noexcept
+    inline constexpr dd_real expm1_(dd_real a) noexcept
     {
         int n;
-        double err1;
-
-        double expm1 = expm1_n(a, n, err1);
+        dd_real expm1 = expm1_n(a, n);
 
         if (n == 0) {
-            expm1 += err1;
             return expm1;
         } else {
-            double expx = two_sum(1, expm1, err1);
+            dd_real expx = 1. + expm1;
             expx = ldexp(expx, n);
-            err1 = ldexp(err1, n);
-            expx -= 1;
-            expx += err1;
-            return expx;
+            return expx - 1.;
         }
+    }
+
+    inline constexpr double expm1_(double a) noexcept
+    {
+        return to_double(expm1_(dd_real(a)));
+    }
+
+    inline constexpr dd_real pow_(dd_real base, dd_real n)
+    {
+        // b^n = e^{ln(b)n}
+        return exp_(log_(base) * n);
     }
 
     inline constexpr double pow_(double base, double n)
     {
         // b^n = e^{ln(b)n}
-        return exp_(log_(base) * n);
+        return to_double(pow_(dd_real(base), dd_real(n)));
     }
 
 
@@ -3798,101 +3848,92 @@ namespace fb {
         return r;
     }
 
+    namespace detail {
+        // just copied from dd_math.h or dd_inline.h
+        inline constexpr dd_real asinh_(const dd_real& a)
+        {
+            using namespace detail;
+            dd_real a2 = sqr_(a);
+            dd_real r = a2 + 1.0;
+            if (a2 <= 0.25) {
+                if (a >= 0.)
+                    return log1p_(a + a2 / (1. + sqrt_(r)));
+                else
+                    return -log1p_(-a + a2 / (1. + sqrt_(r)));
+            } else {
+                if (a >= 0.)
+                    return log_(a + sqrt_(r));
+                else
+                    return -log_(-a + sqrt_(r));
+            }
+        }
+
+        inline constexpr dd_real acosh_(dd_real a)
+        {
+            if (a < 1.0) {
+                return dd_real::_nan;
+            }
+            return log_(a + sqrt_(sqr_(a) - 1.0));
+        }
+
+        inline constexpr dd_real atanh_(const dd_real& a)
+        {
+            if (fabs(a) >= 1.0) {
+                return dd_real::_nan;
+            }
+            return mul_pwr2(log_((1.0 + a) / (1.0 - a)), 0.5);
+        }
+        inline constexpr dd_real sinh_(dd_real x)
+        {
+            dd_real a = expm1_(x);
+            dd_real b = expm1_(-x);
+            return 0.5 * (a - b);
+        }
+        inline constexpr dd_real cosh_(dd_real x)
+        {
+            dd_real a = expm1_(x);
+            dd_real b = expm1_(-x);
+            return (1. + 0.5 * (a + b));
+        }
+
+        inline constexpr dd_real tanh_(dd_real x)
+        {
+            dd_real a = expm1_(x);
+            dd_real b = expm1_(-x);
+            return (a - b) / (2. + a + b);
+        }
+    }
+
 
     inline constexpr double sinh_(double x)
     {
-        double a = expm1_(x);
-        double b = expm1_(-x);
-        return 0.5 * (a - b);
+        return to_double(detail::sinh_(dd_real(x)));
     }
+
+
     inline constexpr double cosh_(double x)
     {
-        double a = expm1_(x);
-        double b = expm1_(-x);
-        return (1. + 0.5 * (a + b));
+        return to_double(detail::cosh_(dd_real(x)));
     }
 
-    inline constexpr double atan_Taylor(double x)
+    inline constexpr double tanh_(double x)
     {
-        // x - x^3/3 + x^5/5
-        double t = x * x;
-        double v_ = 0;
-
-        constexpr int max_iters = 26;
-        double a = max_iters * 2 + 3;
-        double b = max_iters * 2 + 1;
-
-        for (int i = 0; i < max_iters; ++i) {
-            // v_ = v - 1
-            v_ = (1. + v_) * a / b * t;
-            a -= 2.;
-            b -= 2.;
-        }
-
-        return x * (1 + v_);
+        return to_double(detail::tanh_(dd_real(x)));
     }
 
-    inline constexpr double atan_(double x)
+    inline constexpr double asinh_(double a)
     {
-        // tan(x - y) = (tanx - tany)/(1 + tanx tany)
-        // x = tx + arctan((tx-ty£©/(1+txty))
-        // arctan(x) = pi/2 - arctan(1/x)
-        // 
-        // arctan(0) = 0
-        // arctan(inf) = pi/2
-
-        bool sign = false;
-        if (x < 0) {
-            sign = true;
-            x = -x;
-        }
-
-        constexpr double atan_talbe[] = {
-            0,
-            0.2449786631268641541720824812112758109141440983811840671273759146,
-            0.4636476090008061162142562314612144020285370542861202638109330887,
-            0.6435011087932843868028092287173226380415105911153123828656061187,
-            0.7853981633974483096156608458198757210492923498437764552437361480,
-        };
-
-        constexpr double tan_table[] = {
-            0, 0.25, 0.5, 0.75, 1.0,
-        };
-
-        bool inverse = false;
-        if (x > 1.) {
-            x = 1 / x;
-            inverse = true;
-        }
-
-        double v = 0;
-        double low = 1;
-        size_t idx = 0;
-        for (size_t i = 0; i < std::size(phi_table); ++i) {
-            if (fb::abs_(phi_table[i] - x) < low) {
-                low = fb::abs_(phi_table[i] - x);
-                idx = i;
-            }
-        }
-        double t = tan_table[idx];
-        double ratio = (x - t) / (1 + t * x);
-
-        double arctan_ratio = atan_Taylor(ratio);
-
-        double r = atan_talbe[idx] + arctan_ratio;
-
-
-        if (sign) return -r;
-        else return r;
+        return to_double(detail::asinh_(dd_real(a)));
+    }
+    
+    inline constexpr double acosh_(double a)
+    {
+        return to_double(detail::acosh_(dd_real(a)));
     }
 
-    inline constexpr double atan(double x)
+    inline constexpr double atanh_(double a)
     {
-        if (std::is_constant_evaluated()) {
-            return atan_(x);
-        } else {
-            return std::atan(x);
-        }
+        return to_double(detail::atanh_(dd_real(a)));
     }
 
 }
@@ -4085,8 +4126,22 @@ inline QD_CONSTEXPR double inv_fact_dd[n_inv_fact_dd][2] = {
   { 2.81145725434552060e-15,  1.65088427308614326e-31}
 };
 
+
+inline QD_CONSTEXPR dd_real expn_tab[] = {
+    0,
+};
+
+inline QD_CONSTEXPR dd_real exp_integer(int a)
+{
+    dd_real f = 1.;
+    for (int i = 0; i < 9 && a; ++i) {
+
+    }
+    return f;
+}
+
 /* Exponential.  Computes exp(x) in double-double precision. */
-inline QD_CONSTEXPR dd_real exp(const dd_real &a) {
+inline QD_CONSTEXPR dd_real exp_general(const dd_real &a, bool sub_one) {
   /* Strategy:  We first reduce the size of x by noting that
      
           exp(kr + m * log(2)) = 2^m * exp(r)^k
@@ -4099,11 +4154,12 @@ inline QD_CONSTEXPR dd_real exp(const dd_real &a) {
   const double k = 512.0;
   const double inv_k = 1.0 / k;
 
+  dd_real a_ = a;
+  if (a.x[0] >= 709.0)
+      return dd_real::_inf;
+
   if (a.x[0] <= -709.0)
     return 0.0;
-
-  if (a.x[0] >=  709.0)
-    return dd_real::_inf;
 
   if (a.is_zero())
     return 1.0;
@@ -4111,8 +4167,17 @@ inline QD_CONSTEXPR dd_real exp(const dd_real &a) {
   if (a.is_one())
     return dd_real::_e;
 
-  double m = fb::round(a.x[0] / dd_real::_log2.x[0]);
-  dd_real r = mul_pwr2(a - dd_real::_log2 * m, inv_k);
+
+  double a0 = a.x[0];
+  int aint = (int)fb::round(a0);
+  dd_real factor;
+  if (aint) {
+      a0 -= aint;
+      a_.x[0] = qd::quick_two_sum(a0, a_.x[1], a_.x[1]);
+      factor = exp_integer(aint);
+  }
+
+  dd_real r = mul_pwr2(a_, inv_k);
   dd_real s, t, p;
 
   p = sqr(r);
@@ -4138,82 +4203,30 @@ inline QD_CONSTEXPR dd_real exp(const dd_real &a) {
   s = mul_pwr2(s, 2.0) + sqr(s);
   s = mul_pwr2(s, 2.0) + sqr(s);
   s = mul_pwr2(s, 2.0) + sqr(s);
-  s += 1.0;
 
-  return ldexp(s, static_cast<int>(m));
+  if (sub_one) {
+      if (aint == 0) {
+          return s;
+      } else {
+          return (1. + s) * factor - 1.;
+      }
+  } else {
+      s += 1.0;
+      if (aint == 0) {
+          return s;
+      } else {
+          return s * factor;
+      }
+  }
 }
 
-inline QD_CONSTEXPR dd_real ldexp(const dd_real& a, int exp)
+inline QD_CONSTEXPR dd_real exp(const dd_real& a)
 {
-    return dd_real(fb::ldexp(a.x[0], exp), fb::ldexp(a.x[1], exp));
+    return exp_general(a, false);
 }
-
 inline QD_CONSTEXPR dd_real expm1(const dd_real& a)
 {
-    /* Strategy:  We first reduce the size of x by noting that
-
-            exp(kr + m * log(2)) = 2^m * exp(r)^k
-
-       where m and k are integers.  By choosing m appropriately
-       we can make |kr| <= log(2) / 2 = 0.347.  Then exp(r) is
-       evaluated using the familiar Taylor series.  Reducing the
-       argument substantially speeds up the convergence.       */
-
-    const double k = 512.0;
-    const double inv_k = 1.0 / k;
-
-    if (a.x[0] <= -709.0)
-        return 0.0;
-
-    if (a.x[0] >= 709.0)
-        return dd_real::_inf;
-
-    if (a.is_zero())
-        return 1.0;
-
-    if (a.is_one())
-        return dd_real::_e;
-
-    double m = fb::round(a.x[0] / dd_real::_log2.x[0]);
-    dd_real r = mul_pwr2(a - dd_real::_log2 * m, inv_k);
-    dd_real s, t, p;
-
-    p = sqr(r);
-    s = r + mul_pwr2(p, 0.5);
-    p *= r;
-    t = p * dd_real(inv_fact_dd[0][0], inv_fact_dd[0][1]);
-    int i = 0;
-    do {
-        s += t;
-        p *= r;
-        ++i;
-        t = p * dd_real(inv_fact_dd[i][0], inv_fact_dd[i][1]);
-    } while (fb::abs(to_double(t)) > inv_k * dd_real::_eps && i < 5);
-
-    s += t;
-
-    // (1+s)^2
-    // (1+s)^2 = s^2 + 2s + 1 =  1 + s'
-    // (1+s)^2 = 1 + s'
-    // s' = s^2 + 2s
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-
-    // (1+s)2^m - 1
-    if (m == 0) {
-        return s;
-    } else if (m == 1) {
-        return 1. + mul_pwr2(s, 2.);
-    } else {
-        return ldexp(1. + s, static_cast<int>(m)) - 1;
-    }
+    return exp_general(a, true);
 }
 
 inline QD_CONSTEXPR dd_real log1p_smallfrac(const dd_real& frac)
@@ -4759,18 +4772,39 @@ inline dd_real QD_CONSTEXPR asinh(const dd_real &a) {
     }
 }
 
-inline dd_real QD_CONSTEXPR acosh(const dd_real &a) {
+inline QD_CONSTEXPR dd_real acosh(const dd_real &a) {
     if (a < 1.0) {
         return dd_real::_nan;
     }
-    return log(a + sqrt(sqr(a) - 1.0));
+#if 1
+    if (a.x[0] < 1.25) {
+        dd_real a_ = a - 1.;
+        dd_real q = a_ * (a + 1.);
+        dd_real sq = sqrt(q);
+        return log1p(a_ + sq);
+    } else {
+        dd_real sq = sqrt((a - 1.) * (a + 1.));
+        return log(a + sq);
+    }
+#elif 0
+    dd_real sq = sqrt((a - 1.) * (a + 1.));
+    return log(a + sq);
+#elif 0
+    return log(a + sqrt(sqr(a) - 1));
+#endif
 }
 
 inline QD_CONSTEXPR dd_real atanh(const dd_real &a) {
     if (abs(a) >= 1.0) {
         return dd_real::_nan;
     }
-    return mul_pwr2(log((1.0 + a) / (1.0 - a)), 0.5);
+    if (abs(a) < 0.25) {
+        // (1.0 + a) / (1.0 - a) = 1 + r_
+        dd_real r_ = mul_pwr2(a, 2.) / (1.0 - a);
+        return mul_pwr2(log1p(r_), 0.5);
+    } else {
+        return mul_pwr2(log((1.0 + a) / (1.0 - a)), 0.5);
+    }
 }
 
 inline QD_CONSTEXPR dd_real fmod(const dd_real &a, const dd_real &b) {
@@ -4809,19 +4843,6 @@ inline QD_CONSTEXPR dd_real round(const dd_real& a)
     return nint(a);
 }
 
-inline constexpr dd_real floor(const dd_real& a)
-{
-    double hi = fb::floor(a.x[0]);
-    double lo = 0.0;
-
-    if (hi == a.x[0]) {
-        /* High word is integer already.  Round the low word. */
-        lo = fb::floor(a.x[1]);
-        hi = qd::quick_two_sum(hi, lo, lo);
-    }
-
-    return dd_real(hi, lo);
-}
 
 inline constexpr dd_real ceil(const dd_real& a)
 {
@@ -4946,8 +4967,8 @@ inline double drand_fine(Gen& gen)
 template<class Gen>
 inline dd_real ddrand(Gen &gen)
 {
-    double r1 = drand(gen);
-    double r2 = drand(gen) * 1.110223024625156540E-16;
+    double r1 = drand_fine(gen);
+    double r2 = drand_fine(gen) * 1.110223024625156540E-16;
     return dd_real::add(r1, r2);
 }
 
@@ -9422,10 +9443,10 @@ inline QD_CONSTEXPR qd_real fmod(const qd_real &a, const qd_real &b) {
 template<class Gen>
 inline qd_real qdrand(Gen &gen) {
     double const base_f = 1.110223024625156540E-16;
-    double r1 = drand(gen);
-    double r2 = drand(gen) * base_f;
-    double r3 = drand(gen) * (base_f * base_f);
-    double r4 = drand(gen) * (base_f * base_f * base_f);
+    double r1 = drand_fine(gen);
+    double r2 = drand_fine(gen) * base_f;
+    double r3 = drand_fine(gen) * (base_f * base_f);
+    double r4 = drand_fine(gen) * (base_f * base_f * base_f);
     qd::renorm(r1, r2, r3, r4);
     return qd_real(r1, r2, r3, r4);
 }

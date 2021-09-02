@@ -106,7 +106,7 @@ struct dd_real {
 
   QD_CONSTEXPR dd_real &operator=(double a);
 
-  QD_CONSTEXPR dd_real operator^(int n);
+  QD_CONSTEXPR dd_real operator^(int n) const;
   QD_CONSTEXPR static dd_real sqr(double d);
 
   QD_CONSTEXPR static dd_real sqrt(double a);

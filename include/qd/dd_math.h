@@ -194,7 +194,7 @@ inline QD_CONSTEXPR dd_real pow(const dd_real &a, const dd_real &b) {
   return exp(b * log(a));
 }
 
-inline QD_CONSTEXPR int n_inv_fact_dd = 15;
+inline QD_CONSTEXPR int n_inv_fact_dd = 17;
 inline QD_CONSTEXPR double inv_fact_dd[n_inv_fact_dd][2] = {
   { 1.66666666666666657e-01,  9.25185853854297066e-18},
   { 4.16666666666666644e-02,  2.31296463463574266e-18},
@@ -210,11 +210,60 @@ inline QD_CONSTEXPR double inv_fact_dd[n_inv_fact_dd][2] = {
   { 1.14707455977297245e-11,  2.06555127528307454e-28},
   { 7.64716373181981641e-13,  7.03872877733453001e-30},
   { 4.77947733238738525e-14,  4.39920548583408126e-31},
-  { 2.81145725434552060e-15,  1.65088427308614326e-31}
+  { 2.81145725434552060e-15,  1.65088427308614326e-31},
+  { 1.56192069685862252711E-16, 1.19106796602737540024E-32 },
+  { 8.22063524662432949554E-18, 2.21418941196042653637E-34 },
 };
 
+
+inline QD_CONSTEXPR dd_real expn_tab[] = {
+dd_real(2.71828182845904509080E+00,1.44564689172925015783E-16),
+dd_real(7.38905609893065040694E+00,-1.79711394978391483333E-16),
+dd_real(5.45981500331442362040E+01,2.87415780158441149725E-15),
+dd_real(2.98095798704172830185E+03,-2.71032958168736330162E-14),
+dd_real(8.88611052050787210464E+06,5.32118248350156400432E-10),
+dd_real(7.89629601826806875000E+13,7.66097802263510790910E-03),
+dd_real(6.23514908081161674391E+27,1.38997388724928466797E+11),
+dd_real(3.88770840599459482143E+55,2.70796611036621685030E+39),
+dd_real(1.51142766500410352771E+111,1.48059891676144569992E+94),
+dd_real(2.28441358653975650489E+222,1.35492249440234442263E+206),
+};
+inline QD_CONSTEXPR dd_real expn_inv_tab[] = {
+dd_real(3.67879441171442334024E-01,-1.24287536727883625847E-17),
+dd_real(1.35335283236612702318E-01,-1.04238142328866898838E-17),
+dd_real(1.83156388887341786686E-02,1.62506889942713985216E-18),
+dd_real(3.35462627902511853224E-04,-1.44021825104257951948E-20),
+dd_real(1.12535174719259116458E-07,-1.94396212385793011861E-24),
+dd_real(1.26641655490941755372E-14,1.85890796267480905359E-31),
+dd_real(1.60381089054863792659E-28,-7.36132522128421421118E-45),
+dd_real(2.57220937264241481170E-56,1.51363675530534789420E-73),
+dd_real(6.61626105670948527686E-112,-1.58342892691157677006E-129),
+dd_real(4.37749103705305118351E-223,2.70607983022862282398E-239),
+};
+inline QD_CONSTEXPR dd_real exp_integer(int a)
+{
+    dd_real f = 1.;
+    if (a > 0) {
+        for (int i = 0; i < 10 && a; ++i) {
+            if (a & 1) {
+                f *= expn_tab[i];
+            }
+            a >>= 1;
+        }
+    } else {
+        a = -a;
+        for (int i = 0; i < 10 && a; ++i) {
+            if (a & 1) {
+                f *= expn_inv_tab[i];
+            }
+            a >>= 1;
+        }
+    }
+    return f;
+}
+
 /* Exponential.  Computes exp(x) in double-double precision. */
-inline QD_CONSTEXPR dd_real exp(const dd_real &a) {
+inline QD_CONSTEXPR dd_real exp_general(const dd_real &a, bool sub_one) {
   /* Strategy:  We first reduce the size of x by noting that
      
           exp(kr + m * log(2)) = 2^m * exp(r)^k
@@ -227,11 +276,12 @@ inline QD_CONSTEXPR dd_real exp(const dd_real &a) {
   const double k = 512.0;
   const double inv_k = 1.0 / k;
 
+  dd_real a_ = a;
+  if (a.x[0] >= 709.0)
+      return dd_real::_inf;
+
   if (a.x[0] <= -709.0)
     return 0.0;
-
-  if (a.x[0] >=  709.0)
-    return dd_real::_inf;
 
   if (a.is_zero())
     return 1.0;
@@ -239,8 +289,17 @@ inline QD_CONSTEXPR dd_real exp(const dd_real &a) {
   if (a.is_one())
     return dd_real::_e;
 
-  double m = fb::round(a.x[0] / dd_real::_log2.x[0]);
-  dd_real r = mul_pwr2(a - dd_real::_log2 * m, inv_k);
+
+  double a0 = a.x[0];
+  int aint = (int)fb::round(a0);
+  dd_real factor;
+  if (aint) {
+      a0 -= aint;
+      a_.x[0] = qd::quick_two_sum(a0, a_.x[1], a_.x[1]);
+      factor = exp_integer(aint);
+  }
+
+  dd_real r = mul_pwr2(a_, inv_k);
   dd_real s, t, p;
 
   p = sqr(r);
@@ -253,7 +312,7 @@ inline QD_CONSTEXPR dd_real exp(const dd_real &a) {
     p *= r;
     ++i;
     t = p * dd_real(inv_fact_dd[i][0], inv_fact_dd[i][1]);
-  } while (fb::abs(to_double(t)) > inv_k * dd_real::_eps && i < 5);
+  } while (fb::abs(to_double(t)) > inv_k * dd_real::_eps && i < 8);
 
   s += t;
 
@@ -266,77 +325,30 @@ inline QD_CONSTEXPR dd_real exp(const dd_real &a) {
   s = mul_pwr2(s, 2.0) + sqr(s);
   s = mul_pwr2(s, 2.0) + sqr(s);
   s = mul_pwr2(s, 2.0) + sqr(s);
-  s += 1.0;
 
-  return ldexp(s, static_cast<int>(m));
+  if (sub_one) {
+      if (aint == 0) {
+          return s;
+      } else {
+          return (1. + s) * factor - 1.;
+      }
+  } else {
+      s += 1.0;
+      if (aint == 0) {
+          return s;
+      } else {
+          return s * factor;
+      }
+  }
 }
 
+inline QD_CONSTEXPR dd_real exp(const dd_real& a)
+{
+    return exp_general(a, false);
+}
 inline QD_CONSTEXPR dd_real expm1(const dd_real& a)
 {
-    /* Strategy:  We first reduce the size of x by noting that
-
-            exp(kr + m * log(2)) = 2^m * exp(r)^k
-
-       where m and k are integers.  By choosing m appropriately
-       we can make |kr| <= log(2) / 2 = 0.347.  Then exp(r) is
-       evaluated using the familiar Taylor series.  Reducing the
-       argument substantially speeds up the convergence.       */
-
-    const double k = 512.0;
-    const double inv_k = 1.0 / k;
-
-    if (a.x[0] <= -709.0)
-        return 0.0;
-
-    if (a.x[0] >= 709.0)
-        return dd_real::_inf;
-
-    if (a.is_zero())
-        return 1.0;
-
-    if (a.is_one())
-        return dd_real::_e;
-
-    double m = fb::round(a.x[0] / dd_real::_log2.x[0]);
-    dd_real r = mul_pwr2(a - dd_real::_log2 * m, inv_k);
-    dd_real s, t, p;
-
-    p = sqr(r);
-    s = r + mul_pwr2(p, 0.5);
-    p *= r;
-    t = p * dd_real(inv_fact_dd[0][0], inv_fact_dd[0][1]);
-    int i = 0;
-    do {
-        s += t;
-        p *= r;
-        ++i;
-        t = p * dd_real(inv_fact_dd[i][0], inv_fact_dd[i][1]);
-    } while (fb::abs(to_double(t)) > inv_k * dd_real::_eps && i < 5);
-
-    s += t;
-
-    // (1+s)^2
-    // (1+s)^2 = s^2 + 2s + 1 =  1 + s'
-    // (1+s)^2 = 1 + s'
-    // s' = s^2 + 2s
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-
-    // (1+s)2^m - 1
-    if (m == 0) {
-        return s;
-    } else if (m == 1) {
-        return 1. + mul_pwr2(s, 2.);
-    } else {
-        return ldexp(1. + s, static_cast<int>(m)) - 1;
-    }
+    return exp_general(a, true);
 }
 
 inline QD_CONSTEXPR dd_real log1p_smallfrac(const dd_real& frac)
@@ -882,18 +894,39 @@ inline dd_real QD_CONSTEXPR asinh(const dd_real &a) {
     }
 }
 
-inline dd_real QD_CONSTEXPR acosh(const dd_real &a) {
+inline QD_CONSTEXPR dd_real acosh(const dd_real &a) {
     if (a < 1.0) {
         return dd_real::_nan;
     }
-    return log(a + sqrt(sqr(a) - 1.0));
+#if 1
+    if (a.x[0] < 1.25) {
+        dd_real a_ = a - 1.;
+        dd_real q = a_ * (a + 1.);
+        dd_real sq = sqrt(q);
+        return log1p(a_ + sq);
+    } else {
+        dd_real sq = sqrt((a - 1.) * (a + 1.));
+        return log(a + sq);
+    }
+#elif 0
+    dd_real sq = sqrt((a - 1.) * (a + 1.));
+    return log(a + sq);
+#elif 0
+    return log(a + sqrt(sqr(a) - 1));
+#endif
 }
 
 inline QD_CONSTEXPR dd_real atanh(const dd_real &a) {
     if (abs(a) >= 1.0) {
         return dd_real::_nan;
     }
-    return mul_pwr2(log((1.0 + a) / (1.0 - a)), 0.5);
+    if (abs(a) < 0.25) {
+        // (1.0 + a) / (1.0 - a) = 1 + r_
+        dd_real r_ = mul_pwr2(a, 2.) / (1.0 - a);
+        return mul_pwr2(log1p(r_), 0.5);
+    } else {
+        return mul_pwr2(log((1.0 + a) / (1.0 - a)), 0.5);
+    }
 }
 
 inline QD_CONSTEXPR dd_real fmod(const dd_real &a, const dd_real &b) {

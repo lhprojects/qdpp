@@ -462,7 +462,7 @@ inline QD_CONSTEXPR dd_real npwr(const dd_real& a, int n)
 
 
 /********** Exponentiation **********/
-inline constexpr dd_real dd_real::operator^(int n) {
+inline constexpr dd_real dd_real::operator^(int n) const {
   return npwr(*this, n);
 }
 

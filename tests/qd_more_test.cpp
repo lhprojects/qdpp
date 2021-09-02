@@ -909,6 +909,7 @@ struct TestAcc {
 		double err_sum = 0;
 		double err_cnt = 0;
 		double err_max = 0;
+		double a_max = 0;
 		bool hasnan = false;
 		std::uniform_int_distribution<int> uni(0, 1);
 		for (int64_t i = 0; i < iters; ++i) {
@@ -938,13 +939,17 @@ struct TestAcc {
 			}
 			err_sum += r;
 			err_cnt += 1;
+			if (r > err_max) {
+				a_max = to_double(a);
+			}
 			err_max = std::max(err_max, r);
 		}
-		printf("%15s %10.1f %10.1f %10.1f %10.1f %10.2f %10s\n",
+		printf("%15s %10.1f %10.1f %10.1f %10.1f %10.2f(%10.2E) %10s\n",
 			com,
 			100. * err_u[0] / err_cnt, 100. * err_u[1] / err_cnt,
 			100. * err_u[2] / err_cnt,
-			err_sum / err_cnt, err_max,
+			err_sum / err_cnt,
+			err_max, a_max,
 			hasnan ? "Y" : "N");
 	}
 	template<class F>
@@ -958,6 +963,7 @@ struct TestAcc {
 		double err_sum = 0;
 		double err_cnt = 0;
 		double err_max = 0;
+		double a_max = 0;
 		bool hasnan = false;
 		std::uniform_int_distribution<int> uni(0, 1);
 		for (int64_t i = 0; i < iters; ++i) {
@@ -981,20 +987,24 @@ struct TestAcc {
 				err_u[1] += 1;
 			} else if (r < 2.) {
 				err_u[2] += 1;
-			} else {
+			} else if(com == std::string("exp") && r > 10) {
 				err_u[3] += 1;
 				Real c = f(a);
 			}
 			err_sum += r;
 			err_cnt += 1;
+			if (r > err_max) {
+				a_max = to_double(a);
+			}
 			err_max = std::max(err_max, r);
 		}
-		printf("%15s %10.1f %10.1f %10.1f %10.1f %10.2f %10s\n",
-			com,
-			100. * err_u[0] / err_cnt, 100. * err_u[1] / err_cnt,
-			100. * err_u[2] / err_cnt,
-			err_sum / err_cnt, err_max,
-			hasnan ? "Y" : "N");
+        printf("%15s %10.1f %10.1f %10.1f %10.1f %10.2f(%10.2E) %10s\n",
+            com,
+            100. * err_u[0] / err_cnt, 100. * err_u[1] / err_cnt,
+            100. * err_u[2] / err_cnt,
+            err_sum / err_cnt,
+            err_max, a_max,
+            hasnan ? "Y" : "N");
 	}
 
 	TestAcc(double range, int64_t iters)
@@ -1007,9 +1017,10 @@ struct TestAcc {
 			"dd_real" : (sizeof(Real) == sizeof(double)? "double": "qd_real"),
 			use_fb,
 			range, (long long)iters);
-		printf("%15s %10s %10s %10s %10s %10s %10s\n",
+		printf("%15s %10s %10s %10s %10s %10s(%10s) %10s\n",
 			"",
-			"0-0.5ups[%]", "0.5-1ups[%]", "1-2ups[%]", "avg[ups]", "max[ups]",
+			"0-0.5ups[%]", "0.5-1ups[%]", "1-2ups[%]", "avg[ups]",
+			"max[ups]", "x",
 			"HasNan");
 
 		test_accuracy("+", [](auto a, auto b) { return a + b; });
@@ -1105,6 +1116,7 @@ struct TestAcc {
 			return sqrt(fabs(a));
 			});
 		test_accuracy_uni("exp", [](auto a) {
+			if (a > 600.) return 0 * a;
 			using Type = std::remove_cv_t<decltype(a)>;
 			if constexpr (std::is_same_v<Type, double> && use_fb) {
 				return fb::exp_(a);
@@ -1180,6 +1192,7 @@ struct TestAcc {
 			});
 
 		test_accuracy_uni("sinh", [](auto a) {
+			if (a > 600.) return 0 * a;
 			using Type = std::remove_cv_t<decltype(a)>;
 			if constexpr (std::is_same_v<Type, double> && use_fb) {
 				return fb::sinh_(a);
@@ -1187,6 +1200,7 @@ struct TestAcc {
 			return sinh(a);
 			});
 		test_accuracy_uni("cosh", [](auto a) {
+			if (a > 600.) return 0 * a;
 			using Type = std::remove_cv_t<decltype(a)>;
 			if constexpr (std::is_same_v<Type, double> && use_fb) {
 				return fb::cosh_(a);
@@ -1228,22 +1242,50 @@ struct TestAcc {
 };
 void test_accuracy_set()
 {
+	{
+		double a = get_ups((dd_real(2.) / 3.).x[1]);
+		double b = get_ups((dd_real(4.) / 5.).x[1]);
+		double c = get_ups((dd_real(3.) / 5.).x[1]);
+		double d = get_ups((dd_real(4.) / 7.).x[1]);
+		double e = get_ups((dd_real(5.) / 7.).x[1]);
+		double f = get_ups((dd_real(6.) / 7.).x[1]);
+		double ups[] = { a,b,c,d,e,f };
+		double g = *std::max_element(std::begin(ups), std::end(ups));
+		QdAssert(g == get_ups((dd_real(2.) / 3.)));
+	}
+	{
+		double a = get_ups((qd_real(2.) / 3.).x[3]);
+		double b = get_ups((qd_real(4.) / 5.).x[3]);
+		double c = get_ups((qd_real(3.) / 5.).x[3]);
+		double d = get_ups((qd_real(4.) / 7.).x[3]);
+		double e = get_ups((qd_real(5.) / 7.).x[3]);
+		double f = get_ups((qd_real(6.) / 7.).x[3]);
+		double ups[] = { a,b,c,d,e,f };
+		double g = *std::max_element(std::begin(ups), std::end(ups));
+		QdAssert(g == get_ups((qd_real(2.) / 3.)));
+
+	}
+
 	mpfr::mpreal::set_default_prec(1500);
 	int n = 1'000;
 #ifdef NDEBUG
 	n = 10'000'000;
 #endif
+
+
+	TestAcc<dd_real, false>(0.1, 1000);
+	TestAcc<dd_real, false>(1, 1000);
+	TestAcc<dd_real, false>(10, 1000);
+	TestAcc<dd_real, false>(20, 1000);
+
 	TestAcc<double, true>(1, 1000);
 	TestAcc<double, true>(10, 1000);
 	TestAcc<double, true>(20, 1000);
 	TestAcc<double, true>(30, 1000);
 
-
-	TestAcc<dd_real, false>(1, 1000);
 	TestAcc<qd_real, false>(1, 1000);
 	TestAcc<double, false>(1, 1000);
 
-	TestAcc<dd_real, false>(10, 1000);
 	TestAcc<qd_real, false>(10, 1000);
 	TestAcc<double, false>(10, 1000);
 }
