@@ -143,7 +143,7 @@ inline QD_CONSTEXPR void renorm(double &c0, double &c1,
       if (s3 != 0.0)
         s3 += c4;
       else
-        s2 += c4;
+        s2 = qd::quick_two_sum(s2, c4, s3);
     } else {
       s1 = qd::quick_two_sum(s1, c3, s2);
       if (s2 != 0.0)
