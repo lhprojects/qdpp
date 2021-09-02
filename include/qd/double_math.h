@@ -1238,7 +1238,7 @@ namespace fb {
             return mul_pwr2(log_((1.0 + a) / (1.0 - a)), 0.5);
         }
         inline constexpr dd_real sinh_(dd_real x)
-        {
+        {  
             dd_real a = expm1_(x);
             dd_real b = expm1_(-x);
             return 0.5 * (a - b);
@@ -1250,11 +1250,22 @@ namespace fb {
             return (1. + 0.5 * (a + b));
         }
 
-        inline constexpr dd_real tanh_(dd_real x)
+        inline constexpr dd_real tanh_(dd_real a)
         {
-            dd_real a = expm1_(x);
-            dd_real b = expm1_(-x);
-            return (a - b) / (2. + a + b);
+            if (a == 0.) {
+                return 0.0;
+            }
+
+            if (a.x[0] >= 0.5) {
+                dd_real ea = exp_(-2. * a);
+                return 1. - (2 * ea) / (1 + ea);
+            } else if (a.x[0] <= -0.5) {
+                dd_real ea = exp_(2. * a);
+                return -1. + (2 * ea) / (1 + ea);
+            } else {
+                dd_real ea = expm1_(a);
+                return ea * (2. + ea) / (1. + sqr(1. + ea));
+            }
         }
     }
 

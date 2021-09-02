@@ -25,6 +25,8 @@ namespace fb {
     inline constexpr double _subnorm_max = 2.2250738585072009E-308;
     inline constexpr double _norm_min = 2.2250738585072014E-308;
     inline constexpr double _max = 1.7976931348623157E+308;
+    // TODO: currectly not accuracy
+    inline constexpr double _ln_2max = 710.47586007394394204;
     inline constexpr double _infinity = INFINITY;
     inline constexpr double _NaN = NAN;
     inline constexpr double _int_min = -9007199254740992;

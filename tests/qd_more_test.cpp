@@ -920,6 +920,7 @@ struct TestAcc {
 			Real c = f(a, b);
 			if (isnan(c)) {
 				hasnan = true;
+				f(a, b);
 				continue;
 			}
 			mpfr::mpreal a_ = get_mpreal(a);
@@ -972,6 +973,7 @@ struct TestAcc {
 			Real c = f(a);
 			if (isnan(c)) {
 				hasnan = true;
+				f(a);
 				continue;
 			}
 			mpfr::mpreal a_ = get_mpreal(a);
@@ -1012,13 +1014,14 @@ struct TestAcc {
 		this->iters = iters;
 		this->range = range;
 
-		printf("Testing %s(use_floating_basic for double %d) [range=%6.1f, iters=%7lld]\n", 
+		printf("Testing %s%s [range=+-[%6.1E,%6.1E], iters=%7lld]\n", 
 			sizeof(Real) == sizeof(dd_real) ?
 			"dd_real" : (sizeof(Real) == sizeof(double)? "double": "qd_real"),
-			use_fb,
-			range, (long long)iters);
+			use_fb ? "(fb::*)" : "",
+			exp(-0.5*range), exp(0.5 * range),
+			(long long)iters);
 		printf("%15s %10s %10s %10s %10s %10s(%10s) %10s\n",
-			"",
+			"-",
 			"0-0.5ups[%]", "0.5-1ups[%]", "1-2ups[%]", "avg[ups]",
 			"max[ups]", "x",
 			"HasNan");
@@ -1048,6 +1051,7 @@ struct TestAcc {
 					return a / b;
 				}
 				});
+
 			test_accuracy("ieee_add", [](auto a, auto b) {
 				using Type = std::remove_cv_t<decltype(a)>;
 				if constexpr (std::is_same_v<Type, dd_real>
@@ -1068,6 +1072,24 @@ struct TestAcc {
 				});
 		}
 
+		if (std::is_same_v<Real, qd_real>) {
+			test_accuracy("accurate_mul", [](auto a, auto b) {
+				using Type = std::remove_cv_t<decltype(a)>;
+				if constexpr (std::is_same_v<Type, qd_real>) {
+					return Type::accurate_mul(a, b);
+				} else {
+					return a * b;
+				}
+				});
+			test_accuracy("sloppy_mul", [](auto a, auto b) {
+				using Type = std::remove_cv_t<decltype(a)>;
+				if constexpr (std::is_same_v<Type, qd_real>) {
+					return Type::sloppy_mul(a, b);
+				} else {
+					return a * b;
+				}
+				});
+		}
 
 		test_accuracy_uni("abs", [](auto const &a) { 
             using Type = std::remove_cv_t<decltype(a)>;
@@ -1116,7 +1138,7 @@ struct TestAcc {
 			return sqrt(fabs(a));
 			});
 		test_accuracy_uni("exp", [](auto a) {
-			if (a > 600.) return 0 * a;
+			if (fabs(a) > 600.) return 0 * a;
 			using Type = std::remove_cv_t<decltype(a)>;
 			if constexpr (std::is_same_v<Type, double> && use_fb) {
 				return fb::exp_(a);
@@ -1138,6 +1160,7 @@ struct TestAcc {
 			return log10(fabs(a));
 			});
 		test_accuracy("pow", [](auto a, auto b) {
+            if (abs(log(abs(a)) / fb::_d_ln2 * b) > 1000) return 0. * a;
 			using Type = std::remove_cv_t<decltype(a)>;
 			if constexpr (std::is_same_v<Type, double> && use_fb) {
 				return fb::pow_(fb::fabs_(a), b);
@@ -1192,7 +1215,7 @@ struct TestAcc {
 			});
 
 		test_accuracy_uni("sinh", [](auto a) {
-			if (a > 600.) return 0 * a;
+			if (fabs(a) > 600.) return 0 * a;
 			using Type = std::remove_cv_t<decltype(a)>;
 			if constexpr (std::is_same_v<Type, double> && use_fb) {
 				return fb::sinh_(a);
@@ -1200,7 +1223,7 @@ struct TestAcc {
 			return sinh(a);
 			});
 		test_accuracy_uni("cosh", [](auto a) {
-			if (a > 600.) return 0 * a;
+			if (fabs(a) > 600.) return 0 * a;
 			using Type = std::remove_cv_t<decltype(a)>;
 			if constexpr (std::is_same_v<Type, double> && use_fb) {
 				return fb::cosh_(a);
@@ -1266,28 +1289,29 @@ void test_accuracy_set()
 
 	}
 
-	mpfr::mpreal::set_default_prec(1500);
+	mpfr::mpreal::set_default_prec(500);
 	int n = 1'000;
 #ifdef NDEBUG
 	n = 10'000'000;
 #endif
 
+	int f = 100;
 
-	TestAcc<dd_real, false>(0.1, 1000);
-	TestAcc<dd_real, false>(1, 1000);
-	TestAcc<dd_real, false>(10, 1000);
-	TestAcc<dd_real, false>(20, 1000);
+	TestAcc<double, true>(30, 1000 * f);
+	TestAcc<double, true>(1, 1000 * f);
+	TestAcc<double, true>(10, 1000 * f);
+	TestAcc<double, true>(20, 1000 * f);
 
-	TestAcc<double, true>(1, 1000);
-	TestAcc<double, true>(10, 1000);
-	TestAcc<double, true>(20, 1000);
-	TestAcc<double, true>(30, 1000);
+	TestAcc<dd_real, false>(0.1, 1000*f);
+	TestAcc<dd_real, false>(1, 1000 * f);
+	TestAcc<dd_real, false>(10, 1000 * f);
+	TestAcc<dd_real, false>(20, 1000 * f);
 
-	TestAcc<qd_real, false>(1, 1000);
-	TestAcc<double, false>(1, 1000);
+	TestAcc<qd_real, false>(1, 1000 * f);
+	TestAcc<double, false>(1, 1000 * f);
 
-	TestAcc<qd_real, false>(10, 1000);
-	TestAcc<double, false>(10, 1000);
+	TestAcc<qd_real, false>(10, 1000 * f);
+	TestAcc<double, false>(10, 1000 * f);
 }
 
 #endif
