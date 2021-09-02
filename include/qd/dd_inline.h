@@ -32,6 +32,25 @@ inline QD_CONSTEXPR double to_double(const dd_real& a)
     return a.x[0];
 }
 
+inline constexpr dd_real floor(const dd_real& a)
+{
+    double hi = fb::floor(a.x[0]);
+    double lo = 0.0;
+
+    if (hi == a.x[0]) {
+        /* High word is integer already.  Round the low word. */
+        lo = fb::floor(a.x[1]);
+        hi = qd::quick_two_sum(hi, lo, lo);
+    }
+
+    return dd_real(hi, lo);
+}
+
+inline QD_CONSTEXPR dd_real ldexp(const dd_real& a, int exp)
+{
+    return dd_real(fb::ldexp(a.x[0], exp), fb::ldexp(a.x[1], exp));
+}
+
 /*********** Additions ************/
 /* double-double = double + double */
 inline QD_CONSTEXPR dd_real dd_real::add(double a, double b) {

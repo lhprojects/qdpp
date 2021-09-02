@@ -271,11 +271,6 @@ inline QD_CONSTEXPR dd_real exp(const dd_real &a) {
   return ldexp(s, static_cast<int>(m));
 }
 
-inline QD_CONSTEXPR dd_real ldexp(const dd_real& a, int exp)
-{
-    return dd_real(fb::ldexp(a.x[0], exp), fb::ldexp(a.x[1], exp));
-}
-
 inline QD_CONSTEXPR dd_real expm1(const dd_real& a)
 {
     /* Strategy:  We first reduce the size of x by noting that
@@ -937,19 +932,6 @@ inline QD_CONSTEXPR dd_real round(const dd_real& a)
     return nint(a);
 }
 
-inline constexpr dd_real floor(const dd_real& a)
-{
-    double hi = fb::floor(a.x[0]);
-    double lo = 0.0;
-
-    if (hi == a.x[0]) {
-        /* High word is integer already.  Round the low word. */
-        lo = fb::floor(a.x[1]);
-        hi = qd::quick_two_sum(hi, lo, lo);
-    }
-
-    return dd_real(hi, lo);
-}
 
 inline constexpr dd_real ceil(const dd_real& a)
 {
