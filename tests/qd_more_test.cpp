@@ -987,7 +987,7 @@ struct TestAcc {
 				err_u[1] += 1;
 			} else if (r < 2.) {
 				err_u[2] += 1;
-			} else if(com == std::string("exp") && r > 10) {
+			} else if(com == std::string("tanh") && r > 10) {
 				err_u[3] += 1;
 				Real c = f(a);
 			}

@@ -264,14 +264,6 @@ inline QD_CONSTEXPR dd_real exp_integer(int a)
 
 /* Exponential.  Computes exp(x) in double-double precision. */
 inline QD_CONSTEXPR dd_real exp_general(const dd_real &a, bool sub_one) {
-  /* Strategy:  We first reduce the size of x by noting that
-     
-          exp(kr + m * log(2)) = 2^m * exp(r)^k
-
-     where m and k are integers.  By choosing m appropriately
-     we can make |kr| <= log(2) / 2 = 0.347.  Then exp(r) is 
-     evaluated using the familiar Taylor series.  Reducing the 
-     argument substantially speeds up the convergence.       */  
 
   const double k = 512.0;
   const double inv_k = 1.0 / k;
@@ -805,23 +797,30 @@ inline QD_CONSTEXPR dd_real asin(const dd_real &a) {
   if (abs_a.is_one()) {
     return (a.is_positive()) ? dd_real::_pi2 : -dd_real::_pi2;
   }
-
+#if 1
+  dd_real sq = sqrt((1. - a) * (1. + a));
+  return atan2(a, sq);
+#else
   return atan2(a, sqrt(1.0 - sqr(a)));
+#endif
 }
 
 inline QD_CONSTEXPR dd_real acos(const dd_real &a) {
   dd_real abs_a = abs(a);
 
   if (abs_a > 1.0) {
-    //dd_real::error("(dd_real::acos): Argument out of domain.");
     return dd_real::_nan;
   }
 
   if (abs_a.is_one()) {
     return (a.is_positive()) ? dd_real(0.0) : dd_real::_pi;
   }
-
+#if 1
+  dd_real sq = sqrt((1. - a) * (1. + a));
+  return atan2(sq, a);
+#else
   return atan2(sqrt(1.0 - sqr(a)), a);
+#endif
 }
  
 inline QD_CONSTEXPR dd_real sinh(const dd_real &a) {
@@ -829,29 +828,16 @@ inline QD_CONSTEXPR dd_real sinh(const dd_real &a) {
     return 0.0;
   }
 
-  if (abs(a) > 0.05) {
+  if (abs(a) > 0.5) {
+    // exp(a) - exp(-a)
     dd_real ea = exp(a);
     return mul_pwr2(ea - inv(ea), 0.5);
+  } else {
+      dd_real ea = expm1(a);
+      // 1 + ea - 1/(1+ea)
+      // ea(2+ea)/(1+ea)
+      return mul_pwr2(ea * (2. + ea) / (1. + ea), 0.5);
   }
-
-  /* since a is small, using the above formula gives
-     a lot of cancellation.  So use Taylor series.   */
-  dd_real s = a;
-  dd_real t = a;
-  dd_real r = sqr(t);
-  double m = 1.0;
-  double thresh = fb::abs((to_double(a)) * dd_real::_eps);
-
-  do {
-    m += 2.0;
-    t *= r;
-    t /= (m-1) * m;
-
-    s += t;
-  } while (abs(t) > thresh);
-
-  return s;
-
 }
 
 inline dd_real QD_CONSTEXPR cosh(const dd_real &a) {
@@ -868,9 +854,21 @@ dd_real QD_CONSTEXPR tanh(const dd_real &a) {
     return 0.0;
   }
 
-  dd_real ea = exp(a);
-  dd_real inv_ea = inv(ea);
-  return (ea - inv_ea) / (ea + inv_ea);
+  if (a.x[0] >= 0.5) {
+      // (1 - exp(-2a))/(1+exp(-2a))
+      // 1-... = 2 exp(-2a)/(1+exp(-2a))
+      dd_real ea = exp(-mul_pwr2(a, 2));
+      return 1. - mul_pwr2(ea, 2) / (1 + ea);
+  } else if (a.x[0] <= -0.5) {
+      dd_real ea = exp(mul_pwr2(a, 2));
+      return -1. + mul_pwr2(ea, 2) / (1 + ea);
+  } else {
+      // (exp(x) - exp(-x))/(exp(x) + exp(-x))
+      // (ea + 1 - 1/(1 + ea))/(ea + 1 + 1/(1+ea))
+      // ea*(2 + ea)/(1+sqr(1+ea))
+      dd_real ea = expm1(a);
+      return ea * (2. + ea) / (1. + sqr(1. + ea));
+  }
 }
 
 inline void QD_CONSTEXPR sincosh(const dd_real &a, dd_real &sinh_a, dd_real &cosh_a) {
