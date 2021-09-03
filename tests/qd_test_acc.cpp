@@ -2,12 +2,21 @@
 #include <qd/qd_real.h>
 
 #include "mpreal.h"
+#include "mpreal2.h"
+
+mpfr::mpreal get_mpreal(mpfr2::mpreal const &r)
+{
+    mpfr::mpreal a(r.mpfr_ptr());
+    a.set_prec(mpfr::mpreal::get_default_prec(), MPFR_RNDN);
+	return a;
+}
 
 mpfr::mpreal get_mpreal(double r)
 {
 	mpfr::mpreal a(r);
 	return a;
 }
+
 mpfr::mpreal get_mpreal(dd_real r)
 {
 	mpfr::mpreal a(r.x[0]);
@@ -22,6 +31,11 @@ mpfr::mpreal get_mpreal(qd_real r)
 	a += r.x[2];
 	a += r.x[3];
 	return a;
+}
+
+double to_double(mpfr2::mpreal const &r)
+{
+	return r.toDouble();
 }
 
 double get_ups(dd_real r)
@@ -60,13 +74,33 @@ double get_ups(double r)
 	return v;
 }
 
+double get_ups(mpfr2::mpreal const& r)
+{
+	double ups =  get_ups(r.toDouble(MPFR_RNDZ));
+    ups = ldexp(ups, 53 - mpfr2::mpreal::get_default_prec());
+	return ups;
+}
+
 template<class Real>
-double get_err_ups(Real v, mpfr::mpreal ref) {
+double get_err_ups(Real const &v, mpfr::mpreal const &ref) {
     mpfr::mpreal err = get_mpreal(v) - ref;
     double derr = err.toDouble();
     double ups = get_ups(v);
     double r = std::abs(derr / ups);
     return r;
+}
+
+gmp_randstate_t rstate;
+int a = []() {
+	gmp_randinit_default(rstate);
+	gmp_randseed_ui(rstate, 0); return 0;
+}();
+
+template<class T, class Gen>
+std::enable_if_t<std::is_same_v<T, mpfr2::mpreal>, mpfr2::mpreal>
+real_rand(Gen& gen)
+{
+	return mpfr2::urandom(rstate);
 }
 
 template<class Real, bool use_fb = false>
@@ -103,6 +137,7 @@ struct TestAcc {
 			mpfr::mpreal b_ = get_mpreal(b);
 			mpfr::mpreal cref = f(a_, b_);
 			double r = get_err_ups(c, cref);
+
 			if (r < 0.5) {
 				err_u[0] += 1;
 			} else if (r < 1.) {
@@ -135,8 +170,6 @@ struct TestAcc {
 	void test_accuracy_uni(char const* com, F f)
 	{
 		std::mt19937_64 gen;
-		// 1000 bits
-		mpfr::mpreal::set_default_prec(1000);
 
 		int err_u[100] = {};
 		double err_sum = 0;
@@ -190,9 +223,15 @@ struct TestAcc {
 		this->iters = iters;
 		this->range = range;
 
+		std::string name;
+		if (std::is_same_v<Real,mpfr2::mpreal>) {
+			name = "mpfr(prec=" + std::to_string(mpfr2::mpreal::get_default_prec()) +")";
+		} else {
+			name = sizeof(Real) == sizeof(dd_real) ?
+				"dd_real" : (sizeof(Real) == sizeof(double) ? "double" : "qd_real");
+		}
 		printf("%s%s range=+-[%6.1E,%6.1E], iters=%7lld\n",
-			sizeof(Real) == sizeof(dd_real) ?
-			"dd_real" : (sizeof(Real) == sizeof(double) ? "double" : "qd_real"),
+			name.c_str(),
 			use_fb ? "(fb::*)" : "",
 			exp(-0.5 * range), exp(0.5 * range),
 			(long long)iters);
@@ -209,10 +248,10 @@ struct TestAcc {
 			assert(r < 1.);
 		}
 
-		test_accuracy("+", [](auto a, auto b) { return a + b; });
-		test_accuracy("-", [](auto a, auto b) { return a - b; });
-		test_accuracy("*", [](auto a, auto b) { return a * b; });
-		test_accuracy("/", [](auto a, auto b) { return a / b; });
+		test_accuracy("+", [](auto const &a, auto const& b) { return a + b; });
+		test_accuracy("-", [](auto const& a, auto const& b) { return a - b; });
+		test_accuracy("*", [](auto const& a, auto const& b) { return a * b; });
+		test_accuracy("/", [](auto const &a, auto const& b) { return a / b; });
 
 		if constexpr (std::is_same_v < Real, dd_real >
 			|| std::is_same_v<Real, qd_real>) {
@@ -498,20 +537,38 @@ void test_accuracy_set()
 	TestAcc<qd_real, false>(10, n * f);
 	TestAcc<qd_real, false>(20, n * f);
 
-	TestAcc<double, true>(30, n * f);
-	TestAcc<double, true>(1, n * f);
-	TestAcc<double, true>(10, n * f);
-	TestAcc<double, true>(20, n * f);
-
 	TestAcc<dd_real, false>(0.1, n * f);
 	TestAcc<dd_real, false>(1, n * f);
 	TestAcc<dd_real, false>(10, n * f);
 	TestAcc<dd_real, false>(20, n * f);
 
+	TestAcc<double, true>(30, n * f);
+	TestAcc<double, true>(1, n * f);
+	TestAcc<double, true>(10, n * f);
+	TestAcc<double, true>(20, n * f);
+
 	TestAcc<double, false>(0.1, n * f);
 	TestAcc<double, false>(1, n * f);
 	TestAcc<double, false>(10, n * f);
 	TestAcc<double, false>(20, n * f);
+
+	mpfr2::mpreal::set_default_prec(53);
+	TestAcc<mpfr2::mpreal, false>(0.1, n * f);
+	TestAcc<mpfr2::mpreal, false>(1, n * f);
+	TestAcc<mpfr2::mpreal, false>(10, n * f);
+	TestAcc<mpfr2::mpreal, false>(20, n * f);
+
+	mpfr2::mpreal::set_default_prec(106);
+	TestAcc<mpfr2::mpreal, false>(0.1, n * f);
+	TestAcc<mpfr2::mpreal, false>(1, n * f);
+	TestAcc<mpfr2::mpreal, false>(10, n * f);
+	TestAcc<mpfr2::mpreal, false>(20, n * f);
+
+	mpfr2::mpreal::set_default_prec(212);
+	TestAcc<mpfr2::mpreal, false>(0.1, n * f);
+	TestAcc<mpfr2::mpreal, false>(1, n * f);
+	TestAcc<mpfr2::mpreal, false>(10, n * f);
+	TestAcc<mpfr2::mpreal, false>(20, n * f);
 }
 
 int main()
