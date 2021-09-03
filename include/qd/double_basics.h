@@ -237,7 +237,16 @@ namespace fb {
             return std::abs(x);
         }
     }
-    
+
+    inline constexpr double fabs(double x)
+    {
+        if (std::is_constant_evaluated()) {
+            return fabs_(x);
+        } else {
+            return std::fabs(x);
+        }
+    }
+
     // if x == INT_MAX return -x
     inline constexpr int abs_(int x)
     {
