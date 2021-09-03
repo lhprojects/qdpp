@@ -778,7 +778,7 @@ inline qd_real nroot(const qd_real &a, int n) {
   return 1.0 / r;
 }
 
-inline QD_CONSTEXPR const int n_inv_fact_qd = 15;
+inline QD_CONSTEXPR const int n_inv_fact_qd = 22;
 inline QD_CONSTEXPR const qd_real inv_fact[n_inv_fact_qd] = {
   qd_real( 1.66666666666666657e-01,  9.25185853854297066e-18,
            5.13581318503262866e-34,  2.85094902409834186e-50),
@@ -809,8 +809,16 @@ inline QD_CONSTEXPR const qd_real inv_fact[n_inv_fact_qd] = {
   qd_real( 4.77947733238738525e-14,  4.39920548583408126e-31,
           -4.89221204822661465e-49,  1.20086655902368901e-65),
   qd_real( 2.81145725434552060e-15,  1.65088427308614326e-31,
-          -2.87777179307447918e-50,  4.27110689256293549e-67)
+          -2.87777179307447918e-50,  4.27110689256293549e-67),
+qd_real(1.56192069685862252711E-16,1.19106796602737540024E-32,-4.57750605962998323416E-49,2.87494142340899603160E-67),
+qd_real(8.22063524662432949554E-18,2.21418941196042653637E-34,-1.50891402377419897072E-50,1.40072951514781547649E-67),
+qd_real(4.11031762331216484407E-19,1.44129733786595271498E-36,-5.28562754878981208303E-53,-4.14764725635765684990E-70),
+qd_real(1.95729410633912625952E-20,-1.36435038300879084872E-36,1.33923482511250642308E-53,-6.82108942414933121893E-70),
+qd_real(8.89679139245057407789E-22,-7.91140261487237621703E-38,-3.18779767905709332675E-54,1.27057810175205661633E-70),
+qd_real(3.86817017063068412615E-23,-8.84317765548234384789E-40,3.87181571061732467175E-56,-1.95652575315225570181E-72),
+qd_real(1.61173757109611838590E-24,-3.68465735645097660329E-41,1.61325654609055194656E-57,-8.15219063813439928119E-74),
 };
+
 inline QD_CONSTEXPR qd_real expn_tab_qd[] = {
 qd_real(2.71828182845904509080E+00,1.44564689172925015783E-16,-2.12771710803817676452E-33,1.51563015984121914376E-49),
 qd_real(7.38905609893065040694E+00,-1.79711394978391483333E-16,8.26843055513995719208E-33,-5.22436809314754310464E-49),
@@ -900,7 +908,7 @@ inline QD_CONSTEXPR qd_real exp_general(const qd_real& a,
         p *= r;
         ++i;
         t = p * inv_fact[i];
-    } while (fb::abs(to_double(t)) > inv_k * qd_real::_eps && i < 15);
+    } while (fb::abs(to_double(t)) > inv_k * qd_real::_eps && i < n_inv_fact_qd);
 
     s += t;
 
@@ -2497,11 +2505,14 @@ inline QD_CONSTEXPR qd_real sinh(const qd_real &a) {
         return 0.0;
     }
 
-    if (abs(a) > 0.5) {
+    if (a.x[0] > 0.5) {
         // exp(a) - exp(-a)
         qd_real ea = exp(a);
         return mul_pwr2(ea - inv(ea), 0.5);
-    } else {
+    } else if (a.x[0] < -0.5) {
+        qd_real ea = exp(-a);
+        return mul_pwr2(inv(ea) - ea, 0.5);
+    }  else {
         qd_real ea = expm1(a);
         // 1 + ea - 1/(1+ea)
         // ea(2+ea)/(1+ea)
@@ -2514,8 +2525,14 @@ inline QD_CONSTEXPR qd_real cosh(const qd_real &a) {
     return 1.0;
   }
 
-  qd_real ea = exp(a);
-  return mul_pwr2(ea + inv(ea), 0.5);
+  if (a.x[0] < 0.) {
+      // when a << 0, ea is tiny and we may lose some precision
+      qd_real ea = exp(-a);
+      return mul_pwr2(ea + inv(ea), 0.5);
+  } else {
+      qd_real ea = exp(a);
+      return mul_pwr2(ea + inv(ea), 0.5);
+  }
 }
 
 inline QD_CONSTEXPR qd_real tanh(const qd_real &a) {

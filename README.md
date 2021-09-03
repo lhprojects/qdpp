@@ -92,8 +92,6 @@ Both Windows and Linux (not tested) should be OK.
 
 (Sorry!  Far away to complete.)
 
-### Summary
-
 #### `double`
 
 Any function in namespace `fb` is implemented like this
@@ -110,32 +108,32 @@ double foo() noexcept {
 
 It doesn't touch `errno` or throw exceptions in constant evaluation context. If any error occur, It just returns `nan`.
 
-round, ceil, floor, sqrt, ldexp, frexp should be exact.
+### Precision
 
-sqrt should correctly round-to-nearest. err <= 1/2 ups.
+See the precision.txt for details.
 
-I ***try*** to implement round-to-nearest other math functions, e.g. sin, cos, exp, log.
+#### `double`
 
-However, it is almost impossible to (correctly round the last bit for all cases).
-
-My global is  err <= (1/2 + (small number, like 0.01) ) ups. 
-
-I have arrive this global for sin and cos.
-
-But I still don't arrive this for all math functions. The largest error could be 1~2 ups I guess.
+* `round`, `ceil`, `floor`, `abs`, and `fmod` should be exact.
+* `sqrt` should exactly round to nearest. (ups <= 1/2 ups)
+* `exp`, `log`, `log10`, `pow`, `sin`, `cos` , `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh` has an error up to (0.5+tiny number) ups. Almost all results round correctly to nearest.
 
 #### `qd_real` and `dd_real`
 
-For most operation even basic operations like addition, multiply, division, the error is about several ups.
+For  basic operations like `+`,`-`,`*`, `/`, the errors are about 0.5-2 ups for qd_real and 1-4 ups for dd_ral.
+
+For most math functions (except `fmod`, `sin`, `cos` and `tan`), rounding errors are < 10 ups for qd_real and <20 ups for dd_real.
+
+However, the accuracy for `fmod`, `sin`, `cos`, and `tan` can be very bad. The rounding error can be thousands  or millions ups.
 
 # Some notes on changes to `QD`
 
 (Not completed)
 
-* `log()` refined for `dd_real`
-* Refine log implementation for x near 1.
-* `read()` refined for `dd_real`
-* `ddrand` and `qdrand` now need parameter of generator, `lrand48` is not portable, and `std::rand()` is too bad.
-* `real_rand` for function template for `ddrand` and `qdrand`
-* Use `<chrono>` for timing. It's portable, precision, and performant.
-* Add more tests.
+* Improve the accuracy for various math functions.
+* Add `expm1` and `log1p`.
+
+* `ddrand` and `qdrand` now need parameter of generator, `lrand48` is not portable, and `std::rand()` is too bad. Add `real_rand` function template for `ddrand` and `qdrand`
+* Remove `*d_real::*_real(char const *)`. Add string literals `_dd` and `_qd`.
+* Test the accuracy.
+* Test the performance for more operations. `Use `<chrono>` for timing. It's portable, precision, and performant.

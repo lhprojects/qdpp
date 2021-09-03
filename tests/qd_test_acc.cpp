@@ -32,6 +32,7 @@ double get_ups(dd_real r)
 	//    52x    52y
 	// thus 1ups = 2^{-1-52-2-52-a} 2^a
 	double v = ldexp(1., -1 - 52 - 2 - 52 + a);
+	if (v == 0) return fb::_subnorm_min;
 	return v;
 }
 
@@ -43,6 +44,7 @@ double get_ups(qd_real r)
 	//    52x    52y    52z      52w
 	// thus 1ups = 2^{-1-52-(2+52)*3-a} 2^a
 	double v = ldexp(1., -1 - (52 + 2) * 3 - 52 + a);
+	if (v == 0) return fb::_subnorm_min;
 	return v;
 }
 
@@ -54,7 +56,17 @@ double get_ups(double r)
 	//    52x    52y    52z      52w
 	// thus 1ups = 2^{-1-52-(2+52)*3-a} 2^a
 	double v = ldexp(1., -1 - 52 + a);
+	if (v == 0) return fb::_subnorm_min;
 	return v;
+}
+
+template<class Real>
+double get_err_ups(Real v, mpfr::mpreal ref) {
+    mpfr::mpreal err = get_mpreal(v) - ref;
+    double derr = err.toDouble();
+    double ups = get_ups(v);
+    double r = std::abs(derr / ups);
+    return r;
 }
 
 template<class Real, bool use_fb = false>
@@ -89,12 +101,8 @@ struct TestAcc {
 			}
 			mpfr::mpreal a_ = get_mpreal(a);
 			mpfr::mpreal b_ = get_mpreal(b);
-			mpfr::mpreal c_ = get_mpreal(c);
 			mpfr::mpreal cref = f(a_, b_);
-			mpfr::mpreal err = c_ - cref;
-			double derr = err.toDouble();
-			double ups = get_ups(c);
-			double r = std::abs(derr / ups);
+			double r = get_err_ups(c, cref);
 			if (r < 0.5) {
 				err_u[0] += 1;
 			} else if (r < 1.) {
@@ -147,21 +155,19 @@ struct TestAcc {
 				continue;
 			}
 			mpfr::mpreal a_ = get_mpreal(a);
-			mpfr::mpreal c_ = get_mpreal(c);
 			mpfr::mpreal cref = f(a_);
-			mpfr::mpreal err = c_ - cref;
-			double derr = err.toDouble();
-			double ups = get_ups(c);
-			double r = std::abs(derr / ups);
+			double r = get_err_ups(c, cref);
 			if (r < 0.5) {
 				err_u[0] += 1;
 			} else if (r < 1.) {
 				err_u[1] += 1;
 			} else if (r < 2.) {
 				err_u[2] += 1;
-			} else if (com == std::string("cos") && r > 100) {
+			} else if (com == std::string("sinh") && r > 100) {
 				err_u[3] += 1;
 				Real c = f(a);
+				Real d = f(a);
+				Real e = f(a);
 			}
 			err_sum += r;
 			err_cnt += 1;
@@ -195,6 +201,13 @@ struct TestAcc {
 			"0-0.5ups[%]", "0.5-1ups[%]", "1-2ups[%]", "avg[ups]",
 			"max[ups]", "x(,y)",
 			"HasNan");
+
+		{
+			qd_real factor = exp_integer_qd(600);
+			mpfr::mpreal ref = exp(mpfr::mpreal(600));
+			double r = get_err_ups(factor, ref);
+			assert(r < 1.);
+		}
 
 		test_accuracy("+", [](auto a, auto b) { return a + b; });
 		test_accuracy("-", [](auto a, auto b) { return a - b; });
@@ -243,6 +256,14 @@ struct TestAcc {
 		}
 
 		if (std::is_same_v<Real, qd_real>) {
+			test_accuracy("ieee_add_fine", [](auto a, auto b) {
+				using Type = std::remove_cv_t<decltype(a)>;
+				if constexpr (std::is_same_v<Type, qd_real>) {
+					return Type::ieee_add_fine(a, b);
+				} else {
+					return a + b;
+				}
+				});		
 			test_accuracy("accurate_mul", [](auto a, auto b) {
 				using Type = std::remove_cv_t<decltype(a)>;
 				if constexpr (std::is_same_v<Type, qd_real>) {
@@ -466,8 +487,9 @@ void test_accuracy_set()
 	mpfr::mpreal::set_default_prec(500);
 	int64_t n = 1'000;
 #ifdef NDEBUG
-	n = 1'000'000;
+	n = 100'000;
 #endif
+
 
 	int64_t f = 1;
 

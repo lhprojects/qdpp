@@ -835,6 +835,9 @@ inline QD_CONSTEXPR dd_real sinh(const dd_real &a) {
     // exp(a) - exp(-a)
     dd_real ea = exp(a);
     return mul_pwr2(ea - inv(ea), 0.5);
+  } else if (a.x[0] < -0.5) {
+      dd_real ea = exp(-a);
+      return mul_pwr2(inv(ea) - ea, 0.5);
   } else {
       dd_real ea = expm1(a);
       // 1 + ea - 1/(1+ea)
@@ -847,9 +850,14 @@ inline dd_real QD_CONSTEXPR cosh(const dd_real &a) {
   if (a.is_zero()) {
     return 1.0;
   }
-
-  dd_real ea = exp(a);
-  return mul_pwr2(ea + inv(ea), 0.5);
+  if (a < 0.) {
+      // when a << 0, ea is tiny and we may lose some precision
+      dd_real ea = exp(-a);
+      return mul_pwr2(ea + inv(ea), 0.5);
+  } else {
+      dd_real ea = exp(a);
+      return mul_pwr2(ea + inv(ea), 0.5);
+  }
 }
 
 dd_real QD_CONSTEXPR tanh(const dd_real &a) {
