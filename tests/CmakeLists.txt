@@ -26,16 +26,17 @@ if(QD_HAS_MPFR)
 set(QD_MPFR_HOME E:/projects/vcpkg/packages/mpfr_x64-windows)
 set(QD_GMP_HOME E:/projects/vcpkg/packages/gmp_x64-windows)
 
-target_include_directories(qd_test_more PRIVATE  ${QD_MPFR_HOME}/include)
-target_link_directories(qd_test_more PRIVATE  ${QD_MPFR_HOME}/lib)
-target_link_libraries(qd_test_more mpfr)
+add_executable(qd_test_accuracy qd_test_acc.cpp)
 
-target_include_directories(qd_test_more PRIVATE  ${QD_GMP_HOME}/include)
-target_link_directories(qd_test_more PRIVATE  ${QD_GMP_HOME}/lib)
-target_link_libraries(qd_test_more gmp)
+target_compile_definitions(qd_test_accuracy PRIVATE QD_HAS_MPFR=1)
 
-target_compile_definitions(qd_test_more PRIVATE QD_HAS_MPFR=1)
-else()
+target_include_directories(qd_test_accuracy PRIVATE  ${QD_MPFR_HOME}/include)
+target_link_directories(qd_test_accuracy PRIVATE  ${QD_MPFR_HOME}/lib)
+target_link_libraries(qd_test_accuracy mpfr)
+
+target_include_directories(qd_test_accuracy PRIVATE  ${QD_GMP_HOME}/include)
+target_link_directories(qd_test_accuracy PRIVATE  ${QD_GMP_HOME}/lib)
+target_link_libraries(qd_test_accuracy gmp)
 endif()
 
 
