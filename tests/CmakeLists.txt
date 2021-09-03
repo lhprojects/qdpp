@@ -14,7 +14,7 @@ add_executable(qd_test_pslq pslq_test.cpp ${TICTOK})
 add_executable(qd_test_qd qd_test.cpp ${TICTOK})
 add_executable(qd_test_quadt quadt_test.cpp ${TICTOK})
 add_executable(qd_test_double_math double_math.cpp)
-add_executable(qd_bench qd_timer.cpp ${TICTOK})
+add_executable(qd_benchmark qd_timer.cpp ${TICTOK})
 add_executable(qd_test_more qd_more_test.cpp)
 
 # you may change this line
@@ -37,6 +37,18 @@ target_link_libraries(qd_test_accuracy mpfr)
 target_include_directories(qd_test_accuracy PRIVATE  ${QD_GMP_HOME}/include)
 target_link_directories(qd_test_accuracy PRIVATE  ${QD_GMP_HOME}/lib)
 target_link_libraries(qd_test_accuracy gmp)
+
+
+target_compile_definitions(qd_benchmark PRIVATE QD_HAS_MPFR=1)
+
+target_include_directories(qd_benchmark PRIVATE  ${QD_MPFR_HOME}/include)
+target_link_directories(qd_benchmark PRIVATE  ${QD_MPFR_HOME}/lib)
+target_link_libraries(qd_benchmark mpfr)
+
+target_include_directories(qd_benchmark PRIVATE  ${QD_GMP_HOME}/include)
+target_link_directories(qd_benchmark PRIVATE  ${QD_GMP_HOME}/lib)
+target_link_libraries(qd_benchmark gmp)
+
 endif()
 
 

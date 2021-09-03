@@ -21,6 +21,10 @@
 #include "tictoc.h"
 #include <qd/dd.h>
 
+#ifdef QD_HAS_MPFR
+#include "mpreal.h"
+#endif
+
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -55,6 +59,8 @@ public:
 
   double factor() const
   {
+      if (std::is_same_v<mpfr::mpreal, T>) return 1 / 1000.;
+
       if (sizeof(T) == sizeof(double)) return 1.;
       else if (sizeof(T) == sizeof(dd_real)) return 1 / 30.;
       else if (sizeof(T) == sizeof(qd_real)) return 1 / 1000.;
@@ -67,6 +73,9 @@ T TestSuite<T>::pi() { return T::_pi; }
 
 template <>
 double TestSuite<double>::pi() { return 3.141592653589793116; }
+
+template <>
+mpfr::mpreal TestSuite<mpfr::mpreal>::pi() { return mpfr::const_pi(); }
 
 void print_timing(double nops, double t, char const *com) {
     double mops = 1.0e-6 * nops / t;
@@ -360,6 +369,20 @@ T div3_constexpr(T x)
     return f * x;
 }
 
+gmp_randstate_t rstate;
+int a = [](){
+    gmp_randinit_default(rstate);
+    gmp_randseed_ui(rstate, 0); return 0;
+}();
+
+template<class T, class Gen>
+std::enable_if_t<std::is_same_v<T, mpfr::mpreal>, mpfr::mpreal>
+real_rand(Gen& gen)
+{
+    return mpfr::urandom(rstate, MPFR_RNDN);
+}
+
+
 template <class T>
 void TestSuite<T>::testall() {
   test1<operator_add>();
@@ -409,9 +432,11 @@ void TestSuite<T>::testall() {
       return div3(a);
   }, T(-1), T(1.), n, "mulpisqr");
 
-  test_arg1([](T const& a) ->T {
-      return div3_constexpr(a);
-      }, T(-1), T(1.), n, "mulpisqr_cstexpr");
+  if constexpr (!std::is_same_v<mpfr::mpreal, T>) {
+      test_arg1([](T const& a) ->T {
+          return div3_constexpr(a);
+          }, T(-1), T(1.), n, "mulpisqr_cstexpr");
+  }
 
   std::mt19937 gen32;
   std::mt19937_64 gen64;
@@ -438,6 +463,7 @@ void print_usage() {
   cout << "  -long     Perform a longer timing loop." << endl;
 }
 
+
 int main(int argc, char *argv[]) {
   unsigned int old_cw;
   fpu_fix_start(&old_cw);
@@ -448,64 +474,46 @@ int main(int argc, char *argv[]) {
   printf("FMA disable\n");
 #endif
 
-  /* Parse the arguments. */
-  char *arg;
-  for (int i = 1; i < argc; i++) {
-    arg = argv[i];
-    if (strcmp(arg, "-h") == 0 || strcmp(arg, "-help") == 0) {
-      print_usage();
-      std::exit(0);
-    } else if (strcmp(arg, "-double") == 0) {
-      flag_test_double = true;
-    } else if (strcmp(arg, "-dd") == 0) {
-      flag_test_dd = true;
-    } else if (strcmp(arg, "-qd") == 0) {
-      flag_test_qd = true;
-    } else if (strcmp(arg, "-all") == 0) {
-      flag_test_double = flag_test_dd = flag_test_qd = true;
-    } else if (strcmp(arg, "-v") == 0) {
-      flag_verbose = true;
-    } else if (strcmp(arg, "-long") == 0) {
-      long_factor *= 10;
-    } else {
-      cerr << "Unknown flag `" << arg << "'." << endl;
-    }
+  {
+      printf("double\n");
+      TestSuite<double> test;
+      test.testall();
   }
-
-  /* If no flag, test both double-double and quad-double. */
-  if (!flag_test_double && !flag_test_dd && !flag_test_qd) {
-	  flag_test_double=true;
-    flag_test_dd = true;
-    flag_test_qd = true;
+  {
+      printf("dd_real\n");
+      TestSuite<dd_real> test;
+      test.testall();
   }
-
-  if (flag_test_double) {
-    TestSuite<double> test;
-
-    cout << endl;
-    cout << "Timing double" << endl;
-    cout << "-------------" << endl;
-    test.testall();
+  {
+      printf("qd_real\n");
+      TestSuite<qd_real> test;
+      test.testall();
   }
-
-  if (flag_test_dd) {
-    TestSuite<dd_real> test;
-
-    cout << endl;
-    cout << "Timing dd_real" << endl;
-    cout << "--------------" << endl;
-    test.testall();
+ 
+  {
+      printf("MPFR %d\n", 53);
+      mpfr_set_default_prec(53);
+      TestSuite<mpfr::mpreal> test;
+      test.testall();
   }
-
-  if (flag_test_qd) {
-    TestSuite<qd_real> test;
-
-    cout << endl;
-    cout << "Timing qd_real" << endl;
-    cout << "--------------" << endl;
-    test.testall();
+  {
+      printf("MPFR %d\n", 106);
+      mpfr_set_default_prec(106);
+      TestSuite<mpfr::mpreal> test;
+      test.testall();
   }
-  
+  {
+      printf("MPFR %d\n", 212);
+      mpfr_set_default_prec(212);
+      TestSuite<mpfr::mpreal> test;
+      test.testall();
+  }
+  {
+      printf("MPFR %d\n", 500);
+      mpfr_set_default_prec(500);
+      TestSuite<mpfr::mpreal> test;
+      test.testall();
+  }
   fpu_fix_end(&old_cw);
   return 0;
 }

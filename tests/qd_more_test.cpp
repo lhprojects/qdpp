@@ -477,8 +477,11 @@ void test_constexpr()
     QD_CONSTEXPR dd_real atan1 = atan(dd_real(1.));
 
     QD_CONSTEXPR dd_real exp2 = exp(dd_real(2.));
-    QD_CONSTEXPR dd_real log2 = log(dd_real(2.));
-    QD_CONSTEXPR dd_real sinh2 = sinh(dd_real(2.));
+	QD_CONSTEXPR dd_real log2 = log(dd_real(2.));
+	QD_CONSTEXPR double d_log2 = fb::log_(2.);
+	QD_CONSTEXPR dd_real dd_log2 = fb::log_(dd_real(2.));
+
+	QD_CONSTEXPR dd_real sinh2 = sinh(dd_real(2.));
 	QD_CONSTEXPR dd_real sinh0d01 = sinh(dd_real(0.01));
 	QD_CONSTEXPR dd_real cosh2 = cosh(dd_real(2.));
     QD_CONSTEXPR dd_real tanh2 = tanh(dd_real(2.));
