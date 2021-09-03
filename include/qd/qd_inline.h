@@ -252,7 +252,7 @@ inline QD_CONSTEXPR qd_real operator+(const dd_real &a, const qd_real &b) {
 
 namespace qd {
 
-/* s = quick_three_accum(a, b, c) adds c to the dd-pair (a, b).
+/* s = quick_three_accum(a, b, c) adds c to the double-pair (a, b).
  * If the result does not fit in two doubles, then the sum is 
  * output into s and (a,b) contains the remainder.  Otherwise
  * s is zero and (a,b) contains the sum. */
@@ -303,7 +303,7 @@ inline QD_CONSTEXPR qd_real qd_real::ieee_add(const qd_real &a, const qd_real &b
     if (i >= 4 && j >= 4) {
       x[k] = u;
       if (k < 3)
-        x[++k] = v;
+          x[++k] = v;
       break;
     }
 
@@ -331,6 +331,65 @@ inline QD_CONSTEXPR qd_real qd_real::ieee_add(const qd_real &a, const qd_real &b
 
   qd::renorm(x[0], x[1], x[2], x[3]);
   return qd_real(x[0], x[1], x[2], x[3]);
+}
+
+inline QD_CONSTEXPR qd_real qd_real::ieee_add_fine(const qd_real& a, const qd_real& b)
+{
+    int i, j, k;
+    double s, t;
+    double u, v;   /* double-length accumulator */
+    double x[4] = { 0.0, 0.0, 0.0, 0.0 };
+
+    i = j = k = 0;
+    if (fb::abs(a[i]) > fb::abs(b[j]))
+        u = a[i++];
+    else
+        u = b[j++];
+    if (fb::abs(a[i]) > fb::abs(b[j]))
+        v = a[i++];
+    else
+        v = b[j++];
+
+    u = qd::quick_two_sum(u, v, v);
+
+    while (k < 4) {
+        if (i >= 4 && j >= 4) {
+            x[k] = u;
+            if (k < 3) {
+                x[++k] = v;
+                v = 0.;
+            }
+            break;
+        }
+
+        if (i >= 4)
+            t = b[j++];
+        else if (j >= 4)
+            t = a[i++];
+        else if (fb::abs(a[i]) > fb::abs(b[j])) {
+            t = a[i++];
+        } else
+            t = b[j++];
+
+        s = qd::quick_three_accum(u, v, t);
+
+        if (s != 0.0) {
+            x[k++] = s;
+        }
+    }
+
+    /* add the rest. */
+    for (k = i; k < 4; k++)
+        v += a[k];
+    for (k = j; k < 4; k++)
+        v += b[k];
+
+    if (v != 0.) {
+        qd::renorm(x[0], x[1], x[2], x[3], v);
+    } else {
+        qd::renorm(x[0], x[1], x[2], x[3]);
+    }
+    return qd_real(x[0], x[1], x[2], x[3]);
 }
 
 inline QD_CONSTEXPR qd_real qd_real::sloppy_add(const qd_real &a, const qd_real &b) {
@@ -407,7 +466,7 @@ inline QD_CONSTEXPR qd_real operator+(const qd_real &a, const qd_real &b) {
 #ifndef QD_IEEE_ADD
   return qd_real::sloppy_add(a, b);
 #else
-  return qd_real::ieee_add(a, b);
+  return qd_real::ieee_add_fine(a, b);
 #endif
 }
 

@@ -40,7 +40,10 @@ static int  long_factor = 1;
 template <class T>
 class TestSuite {
 public:
-  void test1();
+  
+    template<int op = 0>
+    void test1();
+
   void test2();
   void test3();
   void test4();
@@ -70,7 +73,13 @@ void print_timing(double nops, double t, char const *com) {
     printf("%25s:  %10.6f us  %10.4f MOP/s\n", com, 1./mops, mops);
 }
 
+constexpr int ieee_add_fine = 3;
+constexpr int ieee_add = 2;
+constexpr int sloppy_add = 1;
+constexpr int operator_add = 0;
+
 template <class T>
+template<int op>
 void TestSuite<T>::test1() {
   if (flag_verbose) {
     cout << endl;
@@ -89,13 +98,37 @@ void TestSuite<T>::test1() {
   T a4 = 1.0 / T(17.0);
   T b1 = 0.0, b2 = 0.0, b3 = 0.0, b4 = 0.0;
 
+  char const* name="";
+  if (op == operator_add) name = "+";
+  else if (op == sloppy_add) name = "sloppy_add";
+  else if (op == ieee_add) name = "ieee_add";
+  else if (op == ieee_add_fine) name = "ieee_add_fine";
+
   tic(&tv);
   for (i = 0; i < n; i++) {
-    b1 += a1;
-    b2 += a2;
-    b3 += a3;
-    b4 += a4;
+      if constexpr (op == operator_add) {
+          b1 += a1;
+          b2 += a2;
+          b3 += a3;
+          b4 += a4;
+      } else if constexpr (op == ieee_add_fine) {
+          b1 = T::ieee_add_fine(b1, a1);
+          b2 = T::ieee_add_fine(b2, a2);
+          b3 = T::ieee_add_fine(b3, a3);
+          b4 = T::ieee_add_fine(b4, a4);
+      } else if constexpr (op == sloppy_add) {
+          b1 = T::sloppy_add(b1, a1);
+          b2 = T::sloppy_add(b2, a2);
+          b3 = T::sloppy_add(b3, a3);
+          b4 = T::sloppy_add(b4, a4);
+      } else if constexpr (op == ieee_add) {
+          b1 = T::ieee_add(b1, a1);
+          b2 = T::ieee_add(b2, a2);
+          b3 = T::ieee_add(b3, a3);
+          b4 = T::ieee_add(b4, a4);
+      }
   }
+
   t = toc(&tv);
   if (flag_verbose) {
     cout << "n = " << n << "   t = " << t << endl;
@@ -103,7 +136,7 @@ void TestSuite<T>::test1() {
     cout << 4*n << " operations in " << t << " s." << endl;
   }
 
-  print_timing(4.0*n, t, "add");
+  print_timing(4.0*n, t, name);
 }
 
 template <class T>
@@ -329,7 +362,16 @@ T div3_constexpr(T x)
 
 template <class T>
 void TestSuite<T>::testall() {
-  test1();
+  test1<operator_add>();
+  if constexpr (sizeof(T) == sizeof(qd_real)) {
+      test1<ieee_add_fine>();
+      test1<ieee_add>();
+      test1<sloppy_add>();
+  } else if constexpr (sizeof(T) == sizeof(dd_real)) {
+      test1<ieee_add>();
+      test1<sloppy_add>();
+  }
+
   test2();
   test3();
   test4();

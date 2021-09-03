@@ -82,6 +82,7 @@ struct QD_API qd_real {
   QD_CONSTEXPR bool isinf() const { return QD_ISINF(x[0]); }
 
   QD_CONSTEXPR static qd_real ieee_add(const qd_real &a, const qd_real &b);
+  QD_CONSTEXPR static qd_real ieee_add_fine(const qd_real& a, const qd_real& b);
   QD_CONSTEXPR static qd_real sloppy_add(const qd_real &a, const qd_real &b);
 
   QD_CONSTEXPR qd_real &operator+=(double a);
