@@ -320,7 +320,7 @@ namespace fb {
         } else {
             //positive finite
 
-            return to_double(log1p_(x));
+            return to_double(log1p_(dd_real(x)));
         }
     }
 
