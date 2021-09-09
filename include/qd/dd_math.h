@@ -267,7 +267,7 @@ inline QD_CONSTEXPR dd_real exp_integer_dd(int a)
 /* Exponential.  Computes exp(x) in double-double precision. */
 inline QD_CONSTEXPR dd_real exp_general(const dd_real &a, bool sub_one) {
 
-#if 0
+#if 1
     const int pow2n = 9;
     const double k = 512;
 #else
@@ -291,7 +291,7 @@ inline QD_CONSTEXPR dd_real exp_general(const dd_real &a, bool sub_one) {
 
 
   double a0 = a.x[0];
-  int aint = (int)a0;
+  int aint = (a0 > 0 ? (int)(a0 + 0.5) : (int)(a0 - 0.5));
   dd_real factor;
   if (aint) {
       a0 -= aint;
@@ -300,10 +300,12 @@ inline QD_CONSTEXPR dd_real exp_general(const dd_real &a, bool sub_one) {
   }
 
   dd_real r = mul_pwr2(a_, inv_k);
-  dd_real s, t, p;
+  dd_real p = sqr(r);
+  dd_real s;
+#if 1
+  dd_real t;
   double threshold = fb::abs(to_double(r))*dd_real::_eps;
 
-  p = sqr(r);
   s = r + mul_pwr2(p, 0.5);
   p *= r;
   t = p * dd_real(inv_fact_dd[0][0], inv_fact_dd[0][1]);
@@ -316,6 +318,24 @@ inline QD_CONSTEXPR dd_real exp_general(const dd_real &a, bool sub_one) {
   } while (fb::abs(to_double(t)) > threshold && i < n_inv_fact_dd);
 
   s += t;
+#else
+
+  // magic number from remez method
+  using namespace qd_literals;
+  constexpr dd_real a0_ = -0.0416666666666666666666666666659412534_dd;
+  constexpr dd_real a1 = +0.0041666666666666666666660724080467490_dd;
+  constexpr dd_real a2 = -0.000421626984126984049093410577070423_dd;
+  constexpr dd_real a3 = +4.2713844793604873188359276530385870E-5_dd;
+  constexpr dd_real a4 = -4.32768481565880509476533748082554575249E-6_dd;
+
+  s = a4;
+  s = s * p + a3;
+  s = s * p + a2;
+  s = s * p + a1;
+  dd_real R1 = s * p + a0_;
+  dd_real R = mul_pwr2(r, 0.5) + r * p * R1;
+  s = mul_pwr2(R, 2.) / (1. - R);
+#endif
 
   for (int i = 0; i < pow2n; ++i) {
       dd_real _2s = mul_pwr2(s, 2.0);
@@ -446,7 +466,6 @@ inline QD_CONSTEXPR dd_real sin_taylor(const dd_real &a) {
     s += t;
     i += 2;
   } while (i < n_inv_fact_dd && fb::abs(to_double(t)) > thresh);
-
   return s;
 }
 
