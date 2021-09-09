@@ -205,8 +205,7 @@ inline std::ostream &operator<<(std::ostream &os, const qd_real &qd) {
 
 /* Read a quad-double from s. */
 inline QD_CONSTEXPR int qd_real::read(const char *s, qd_real &qd) {
-    std::char_traits<char> traits;
-    size_t len = traits.length(s);
+    size_t len = std::char_traits<char>::length(s);
     return qd_read(s, s + len, qd);
 }
 
@@ -736,6 +735,7 @@ inline QD_CONSTEXPR qd_real sqrt(const qd_real &a) {
   } else
 #endif
   {
+      // 6 add/sub + 7 mul
       qd_real r = (1.0 / fb::sqrt(a[0]));
       qd_real h = mul_pwr2(a, 0.5);
 
@@ -886,7 +886,6 @@ inline QD_CONSTEXPR qd_real exp_general(const qd_real& a,
     if (a.is_one())
         return qd_real::_e;
 
-
     double a0 = a.x[0];
     int aint = (int)fb::round(a0);
     qd_real factor;
@@ -897,6 +896,7 @@ inline QD_CONSTEXPR qd_real exp_general(const qd_real& a,
 
     qd_real r = mul_pwr2(a_, inv_k);
     qd_real s, t, p;
+    double threshold = fb::abs(to_double(r)) * qd_real::_eps;
 
     p = sqr(r);
     s = r + mul_pwr2(p, 0.5);
@@ -908,19 +908,25 @@ inline QD_CONSTEXPR qd_real exp_general(const qd_real& a,
         p *= r;
         ++i;
         t = p * inv_fact[i];
-    } while (fb::abs(to_double(t)) > inv_k * qd_real::_eps && i < n_inv_fact_qd);
+    } while (fb::abs(to_double(t)) > threshold && i < n_inv_fact_qd);
 
     s += t;
 
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
-    s = mul_pwr2(s, 2.0) + sqr(s);
+    if (0) {
+        s = mul_pwr2(s, 2.0) + sqr(s);
+        s = mul_pwr2(s, 2.0) + sqr(s);
+        s = mul_pwr2(s, 2.0) + sqr(s);
+        s = mul_pwr2(s, 2.0) + sqr(s);
+        s = mul_pwr2(s, 2.0) + sqr(s);
+        s = mul_pwr2(s, 2.0) + sqr(s);
+        s = mul_pwr2(s, 2.0) + sqr(s);
+        s = mul_pwr2(s, 2.0) + sqr(s);
+        s = mul_pwr2(s, 2.0) + sqr(s);
+    } else {
+        for (int i = 0; i < 9; ++i) {
+            s = mul_pwr2(s, 2.0) + sqr(s);
+        }
+    }
 
     if (sub_one) {
         if (aint == 0) {

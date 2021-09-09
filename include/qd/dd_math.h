@@ -267,8 +267,14 @@ inline QD_CONSTEXPR dd_real exp_integer_dd(int a)
 /* Exponential.  Computes exp(x) in double-double precision. */
 inline QD_CONSTEXPR dd_real exp_general(const dd_real &a, bool sub_one) {
 
-  const double k = 512.0;
-  const double inv_k = 1.0 / k;
+#if 0
+    const int pow2n = 9;
+    const double k = 512;
+#else
+    const int pow2n = 6;
+    const double k = 64.;
+#endif
+    const double inv_k = 1.0 / k;
 
   dd_real a_ = a;
   if (a.x[0] >= 709.0)
@@ -285,7 +291,7 @@ inline QD_CONSTEXPR dd_real exp_general(const dd_real &a, bool sub_one) {
 
 
   double a0 = a.x[0];
-  int aint = (int)fb::round(a0);
+  int aint = (int)a0;
   dd_real factor;
   if (aint) {
       a0 -= aint;
@@ -295,6 +301,7 @@ inline QD_CONSTEXPR dd_real exp_general(const dd_real &a, bool sub_one) {
 
   dd_real r = mul_pwr2(a_, inv_k);
   dd_real s, t, p;
+  double threshold = fb::abs(to_double(r))*dd_real::_eps;
 
   p = sqr(r);
   s = r + mul_pwr2(p, 0.5);
@@ -306,19 +313,15 @@ inline QD_CONSTEXPR dd_real exp_general(const dd_real &a, bool sub_one) {
     p *= r;
     ++i;
     t = p * dd_real(inv_fact_dd[i][0], inv_fact_dd[i][1]);
-  } while (fb::abs(to_double(t)) > inv_k * dd_real::_eps && i < 8);
+  } while (fb::abs(to_double(t)) > threshold && i < n_inv_fact_dd);
 
   s += t;
 
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s); 
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
-  s = mul_pwr2(s, 2.0) + sqr(s);
+  for (int i = 0; i < pow2n; ++i) {
+      dd_real _2s = mul_pwr2(s, 2.0);
+      dd_real s2 = sqr(s);
+      s = _2s + s2;
+  }
 
   if (sub_one) {
       if (aint == 0) {
